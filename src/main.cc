@@ -12,6 +12,8 @@
 #include <iostream>
 
 #include "../headers/timer.hh"
+#include "../headers/utilidades.hh"
+#include "../headers/compilador.hh"
 
 /**
  * @brief Punto de entrada
@@ -21,7 +23,12 @@
  */
 int main(const int argc, const char* const argv[]) {
 	Timer crono;
-
+	std::string filename{"../test/input/hello.c"};
+	Compilador bench{LeerArchivoSTR(filename)};
+	std::string ruta{"../test/output/"};
+	std::string extension{".asm"};
+	std::string out = filename.substr(filename.find_last_of('/') + 1, filename.size() - filename.find_last_of('/') - (1 + (filename.size() - filename.find_last_of('.'))));
+	CrearArchivo(ruta + out + ".asm", bench.Compilar());
 	std::cout << "La compilación duró: " << crono.elapsed() << " ms" << std::endl;
 	return 0;
 }
