@@ -11,19 +11,50 @@
 
 #pragma once
 
+#include "../headers/utilidades.hh"
+
 #include <string>
+
+const std::vector<std::string> builtin_tipos{
+		"char",
+		"bool"
+		"int",
+		"float",
+		"double",
+};
 
 class Compilador {
  public:
-	/// Constructores
-	Compilador(const std::string&); /// Constructor estándar
-	/// Destructores
-	// ~Compilador();
-	/// Métodos
+	/// Constructor estándar
+	Compilador(const archivo_t&);
+
+	/// Para compilar
 	std::string Compilar();
 
- protected:
  private:
 	/// Atributos
-	const std::string source_;
+	archivo_t source_;
+	int source_index_;
+	archivo_t data_segment_;
+	archivo_t text_segment_;
+	/// Métodos
+
+	void SelZeroIndent();
+	void SelNonZeroIndent();
+
+	std::string& linea();
+
+	/// Chuchangas friend?
+
+	void Funciones();
+	void LlamadaFunciones();
+	void Ostream();
+	void Istream();
+	void For();
+	void While();
+	void Elif();
+	void ReturnBool();
+	void Return();
+	void GlobalVar();
+	void LocalVar();
 };

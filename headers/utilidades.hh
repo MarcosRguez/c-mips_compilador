@@ -17,6 +17,7 @@
 typedef std::vector<std::string> archivo_t;
 
 archivo_t LeerArchivo(const std::string&);
+void EliminarComentarios(archivo_t&);
 void CrearArchivo(const std::string&, const std::string&, const archivo_t&);
 void CrearArchivo(const std::string&, const std::string&);
 std::string LineaUnica(const archivo_t&);

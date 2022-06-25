@@ -48,6 +48,28 @@ std::string LeerArchivoSTR(const std::string& filename) {
 }
 
 /**
+ * @brief Elimina los comentarios
+ * @param[out] archivo El archivo a operar.
+ */
+void EliminarComentarios(archivo_t& archivo) {
+	for (std::size_t i = 0; i < archivo.size(); i++) {
+		// Comentarios
+		int posicion{-1};
+		posicion = archivo[i].find("//");
+		if (posicion != -1) {
+			archivo[i].erase(posicion, archivo[i].size());
+		}
+	}
+	/*  Adaptar
+		posicion = -1;
+		posicion = linea.find("#");
+		if (posicion != -1) {
+			archivo[i].replace(posicion, 1, "//");
+		}
+	*/
+}
+
+/**
  * @brief Esta función crea un archivo.
  * @param[in] filename_out El nombre del archivo.
  * @param[in] contenido El contenido del archivo en forma de vector de cadenas,
