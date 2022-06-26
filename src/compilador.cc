@@ -11,33 +11,29 @@
 
 #include "../headers/compilador.hh"
 #include "../headers/utilidades.hh"
+#include "../headers/mapeos.hh"
 
 #include <iostream>
 
-Compilador::Compilador(const archivo_t& source) :
+Compilador::Compilador(const std::string& source) :
 		source_{source},
 		source_index_{0} {}
 
 std::string Compilador::Compilar() {
+	Tokenizar();
 	/// Preprocesar
+	/*
 	EliminarComentarios(source_);
 	EliminarDirectivas(source_);
 	EliminarCorchetes(source_);
 	EliminarEspacios(source_);
 	EliminarLineasVacias(source_);
+	*/
 	/// Gettín redi
 	unsigned indent_last{0};
 	unsigned indent_current{0};
 	/// Bucle
 	while (source_index_ != source_.size()) {
-		indent_current = linea().find_first_not_of('\t');
-		if (indent_current == 0) {
-			SelZeroIndent();
-		} else {
-			SelNonZeroIndent();
-		}
-		indent_last = indent_current;
-		source_index_++;
 	}
 	/// Devolver resultado
 	archivo_t resultado;
@@ -50,13 +46,33 @@ std::string Compilador::Compilar() {
 	return LineaUnica(resultado);
 }
 
-void Compilador::SelZeroIndent() {
-	/// Global var
-	std::string tipo = linea().substr(linea().find_first_of(' '));
-	/// Función
+void Compilador::Tokenizar() {
+	for (auto& i : source_) {
+		if (i == '\n' || i == '\t') i = ' ';
+	}
+	std::string palabra;
+	for (int i{0}; i < source_.size(); i++) {
+		if (isalnum(source_[i]) || source_[i] == '_') {
+			while (isalnum(source_[i]) || source_[i] == '_') {
+				palabra.push_back(source_[i++]);
+			}
+			if (m_keyword.find(palabra) != m_keyword.end()) {
+				tokens_.push_back(std::make_pair(token_t::KEYWORD, static_cast<unsigned>(m_keyword.at(palabra))));
+			} else if (m_tipos.find(palabra) != m_tipos.end()) {
+				tokens_.push_back(std::make_pair(token_t::TYPE, static_cast<unsigned>(m_tipos.at(palabra))));
+			} else { /// identificador
+				tokens_.push_back(std::make_pair(token_t::IDENTIFIER, 0));
+			}
+			palabra.clear();
+		} else {
+			if (m_symbol.find(source_[i]) != m_symbol.end()) {
+				tokens_.push_back(std::make_pair(token_t::SYMBOL, static_cast<unsigned>(m_symbol.at(source_[i]))));
+			} else if (m_operator.find(source_[i]) != m_operator.end()) {
+				tokens_.push_back(std::make_pair(token_t::OPERATOR, static_cast<unsigned>(m_operator.at(source_[i]))));
+			}
+		}
+	}
 }
-void Compilador::SelNonZeroIndent() {}
 
-std::string& Compilador::linea() {
-	return source_[source_index_];
-}
+void Compilador::SelZeroIndent() {}
+void Compilador::SelNonZeroIndent() {}

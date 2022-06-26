@@ -12,37 +12,34 @@
 #pragma once
 
 #include "../headers/utilidades.hh"
+#include "../headers/enums.hh"
 
 #include <string>
-
-const std::vector<std::string> builtin_tipos{
-		"char",
-		"bool"
-		"int",
-		"float",
-		"double",
-};
+#include <map>
 
 class Compilador {
  public:
 	/// Constructor estándar
-	Compilador(const archivo_t&);
+	Compilador(const std::string&);
 
 	/// Para compilar
 	std::string Compilar();
 
  private:
 	/// Atributos
-	archivo_t source_;
-	int source_index_;
-	archivo_t data_segment_;
-	archivo_t text_segment_;
+	std::string source_{};
+	int source_index_{};
+	archivo_t data_segment_{};
+	archivo_t text_segment_{};
+	std::vector<std::pair<token_t, unsigned>> tokens_{};
 	/// Métodos
+
+	void Tokenizar();
 
 	void SelZeroIndent();
 	void SelNonZeroIndent();
 
-	std::string& linea();
+	// std::string& linea();
 
 	/// Chuchangas friend?
 

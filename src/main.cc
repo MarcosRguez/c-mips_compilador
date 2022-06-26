@@ -24,7 +24,7 @@
 int main(const int argc, const char* const argv[]) {
 	Timer crono;
 	std::string filename{"../test/input/hello.c"};
-	Compilador bench{LeerArchivo(filename)};
+	Compilador bench{LeerArchivoSTR(filename)};
 	std::string ruta{"../test/output/"};
 	std::string extension{".asm"};
 	std::string out = filename.substr(filename.find_last_of('/') + 1, filename.size() - filename.find_last_of('/') - (1 + (filename.size() - filename.find_last_of('.'))));
