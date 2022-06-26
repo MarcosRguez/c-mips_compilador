@@ -15,11 +15,38 @@
 
 #include <map>
 
-const std::map<char, operator_e> m_operator{
-		{'=', operator_e::ASIGNACION},
-		{',', operator_e::COMA},
-		{'*', operator_e::PUNTERO},
-		{'&', operator_e::REFERENCIA}};
+const std::map<std::string, operator_e> m_operator{
+		/// aritméticos
+		{"+", operator_e::SUMA},
+		{"-", operator_e::RESTA},
+		{"*", operator_e::PRODUCTO},
+		{"/", operator_e::DIVISION},
+		{"%", operator_e::MODULO},
+		/// aritméticos de asignación
+		{"+=", operator_e::SUMA_A},
+		{"-=", operator_e::RESTA_A},
+		{"*=", operator_e::PRODUCTO_A},
+		{"/=", operator_e::DIVISION_A},
+		{"%=", operator_e::MODULO_A},
+		/// incremento y decremento
+		{"++", operator_e::INCREMENTO},
+		{"--", operator_e::DECREMENTO},
+		/// comparación
+		{"<", operator_e::MENORQUE},
+		{">", operator_e::MAYORQUE},
+		{"<=", operator_e::MENORIGUAL},
+		{">=", operator_e::MAYORIGUAL},
+		{"==", operator_e::IGUALQUE},
+		{"!=", operator_e::DESIGUALQUE},
+		/// otros
+		{"=", operator_e::ASIGNACION},
+		{",", operator_e::COMA},
+		{"*", operator_e::PUNTERO},
+		{"&", operator_e::REFERENCIA},
+		/// miscelánea
+		{"<?", operator_e::MINIMO},
+		{">?", operator_e::MAXIMO},
+};
 
 const std::map<char, symbol_e> m_symbol{
 		{'#', symbol_e::ALMOHADILLA},

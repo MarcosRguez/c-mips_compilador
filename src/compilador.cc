@@ -47,9 +47,22 @@ std::string Compilador::Compilar() {
 }
 
 void Compilador::Tokenizar() {
+	/// Preprocesar
 	for (auto& i : source_) {
 		if (i == '\n' || i == '\t') i = ' ';
 	}
+	char last;
+	for (int i{0}; i < source_.size(); i++) {
+		if (i == 0) {
+			last = source_[i];
+			continue;
+		}
+		if (source_[i] == ' ' && last == ' ') {
+			source_.erase(--i, 1);
+		}
+		last = source_[i];
+	}
+	/// preprocesado acabado
 	std::string palabra;
 	for (int i{0}; i < source_.size(); i++) {
 		if (isalnum(source_[i]) || source_[i] == '_') {
@@ -67,8 +80,13 @@ void Compilador::Tokenizar() {
 		} else {
 			if (m_symbol.find(source_[i]) != m_symbol.end()) {
 				tokens_.push_back(std::make_pair(token_t::SYMBOL, static_cast<unsigned>(m_symbol.at(source_[i]))));
-			} else if (m_operator.find(source_[i]) != m_operator.end()) {
-				tokens_.push_back(std::make_pair(token_t::OPERATOR, static_cast<unsigned>(m_operator.at(source_[i]))));
+				continue;
+			}
+			while (source_[i] != ' ') {
+				palabra.push_back(source_[i++]);
+			}
+			if (m_operator.find(palabra) != m_operator.end()) {
+				tokens_.push_back(std::make_pair(token_t::OPERATOR, static_cast<unsigned>(m_operator.at(palabra))));
 			}
 		}
 	}

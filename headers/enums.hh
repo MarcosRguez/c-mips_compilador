@@ -48,9 +48,34 @@ enum class symbol_e {
 };
 
 enum class operator_e {
+	/// Aritméticos
+	SUMA,
+	RESTA,
+	PRODUCTO,
+	DIVISION,
+	MODULO,
+	SUMA_A,
+	RESTA_A,
+	PRODUCTO_A,
+	DIVISION_A,
+	MODULO_A,
+	/// incremento y decremento
+	INCREMENTO,
+	DECREMENTO,
+	/// comparación
+	MENORQUE,
+	MAYORQUE,
+	MENORIGUAL,
+	MAYORIGUAL,
+	IGUALQUE,
+	DESIGUALQUE,
+	/// otros
 	ASIGNACION,
 	COMA,
 	PUNTERO,
 	REFERENCIA,
-	MIEMBRO
+	MIEMBRO,
+	/// miscelánea
+	MINIMO,
+	MAXIMO
 };
