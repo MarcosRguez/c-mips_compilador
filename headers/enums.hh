@@ -20,6 +20,16 @@ enum class token_t {
 	OPERATOR
 };
 
+enum class literal_e {
+	STR,
+	INT,
+	DOUBLE
+};
+
+enum class directivas_e {
+	INCLUDE
+};
+
 enum class tipos_e {
 	VOID,
 	CHAR,
@@ -29,6 +39,10 @@ enum class tipos_e {
 };
 
 enum class keyword_e {
+	/// Calificadores de tipo
+	CONST,
+	STATIC,
+	/// control de flujo
 	FOR,
 	WHILE,
 	DO
@@ -44,7 +58,9 @@ enum class symbol_e {
 	COMILLAAN_A,
 	COMILLAAN_C,
 	PUNTOYCOMA,
-	ALMOHADILLA
+	ALMOHADILLA,
+	COMILLA,
+	COMILLAS,
 };
 
 enum class operator_e {

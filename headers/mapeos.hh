@@ -58,7 +58,10 @@ const std::map<char, symbol_e> m_symbol{
 		{'}', symbol_e::LLAVE_C},
 		{'<', symbol_e::COMILLAAN_A},
 		{'>', symbol_e::COMILLAAN_C},
-		{';', symbol_e::PUNTOYCOMA}};
+		{';', symbol_e::PUNTOYCOMA},
+		{'\'', symbol_e::COMILLA},
+		{'\"', symbol_e::COMILLAS}
+		};
 
 const std::map<std::string, tipos_e>
 		m_tipos{
@@ -70,6 +73,13 @@ const std::map<std::string, tipos_e>
 
 const std::map<std::string, keyword_e>
 		m_keyword{
+				/// Calificadores de tipo
+				{"const", keyword_e::CONST},
+				{"static", keyword_e::STATIC},
+				/// control de flujo
 				{"for", keyword_e::FOR},
 				{"while", keyword_e::WHILE},
 				{"do", keyword_e::DO}};
+
+const std::map<std::string, directivas_e> m_directivas{
+		{"include", directivas_e::INCLUDE}};

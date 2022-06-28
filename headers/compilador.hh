@@ -16,6 +16,7 @@
 
 #include <string>
 #include <map>
+#include <queue>
 
 class Compilador {
  public:
@@ -32,6 +33,8 @@ class Compilador {
 	archivo_t data_segment_{};
 	archivo_t text_segment_{};
 	std::vector<std::pair<token_t, unsigned>> tokens_{};
+	std::queue<std::string> identificadores_{};
+	std::queue<std::string> str_literales_{};
 	/// Métodos
 
 	void Tokenizar();
