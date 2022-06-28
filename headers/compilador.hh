@@ -35,6 +35,7 @@ class Compilador {
 	std::vector<std::pair<token_t, unsigned>> tokens_{};
 	std::queue<std::string> identificadores_{};
 	std::queue<std::string> str_literales_{};
+	std::queue<int> int_literales_{};
 	/// Métodos
 
 	void Tokenizar();

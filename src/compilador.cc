@@ -27,14 +27,6 @@ std::string Compilador::Compilar() {
 		std::cerr << error.what() << std::endl;
 		exit(EXIT_FAILURE);
 	}
-	/// Preprocesar
-	/*
-	EliminarComentarios(source_);
-	EliminarDirectivas(source_);
-	EliminarCorchetes(source_);
-	EliminarEspacios(source_);
-	EliminarLineasVacias(source_);
-	*/
 	/// Gettín redi
 	unsigned indent_last{0};
 	unsigned indent_current{0};
@@ -74,6 +66,7 @@ void Compilador::Tokenizar() {
 	bool string_literal{false};
 	// token_t prev{};
 	for (int i{0}; i < source_.size(); i++) {
+		if (source_[i] == ' ') continue;
 		if (string_literal && !preprocesado) {
 			char prev;
 			while (!(source_[i] == '\"' && prev != '\\')) {
@@ -83,6 +76,7 @@ void Compilador::Tokenizar() {
 			str_literales_.push(palabra);
 			tokens_.push_back(std::make_pair(token_t::LITERAL, static_cast<unsigned>(literal_e::STR)));
 			palabra.clear();
+			string_literal = false;
 		} else if (preprocesado && string_literal) {
 			while (source_[i] != '>') {
 				palabra.push_back(source_[i++]);
@@ -90,26 +84,36 @@ void Compilador::Tokenizar() {
 			preprocesado = false;
 			string_literal = false;
 			palabra.clear();
-		}
-		if (isalnum(source_[i]) || source_[i] == '_') {
-			while (isalnum(source_[i]) || source_[i] == '_') {
-				palabra.push_back(source_[i++]);
-			}
-			/// Flags
-			if (preprocesado) {
-				if (m_directivas.find(palabra) == m_directivas.end()) {
-					throw std::runtime_error{"Error en la línea " + std::to_string(i + 1) + ": directiva desconocida."};
+		} else if (isalnum(source_[i]) || source_[i] == '_') {
+			/// num literal
+			if (isdigit(source_[i])) {
+				while (isdigit(source_[i]) || source_[i] == '.') {
+					palabra.push_back(source_[i++]);
 				}
-				continue;
-			}
-			/// Regular
-			if (m_keyword.find(palabra) != m_keyword.end()) {
-				tokens_.push_back(std::make_pair(token_t::KEYWORD, static_cast<unsigned>(m_keyword.at(palabra))));
-			} else if (m_tipos.find(palabra) != m_tipos.end()) {
-				tokens_.push_back(std::make_pair(token_t::TYPE, static_cast<unsigned>(m_tipos.at(palabra))));
-			} else { /// identificador
-				tokens_.push_back(std::make_pair(token_t::IDENTIFIER, 0));
-				identificadores_.push(palabra);
+				tokens_.push_back(std::make_pair(token_t::LITERAL, static_cast<unsigned>(literal_e::INT)));
+				int_literales_.push(stoi(palabra));
+				palabra.clear();
+			} else {
+				while (isalnum(source_[i]) || source_[i] == '_') {
+					palabra.push_back(source_[i++]);
+				}
+				/// Flags
+				if (preprocesado) {
+					if (m_directivas.find(palabra) == m_directivas.end()) {
+						throw std::runtime_error{"Error en la línea " + std::to_string(i + 1) + ": directiva desconocida."};
+					}
+					palabra.clear();
+					continue;
+				}
+				/// Regular
+				if (m_keyword.find(palabra) != m_keyword.end()) {
+					tokens_.push_back(std::make_pair(token_t::KEYWORD, static_cast<unsigned>(m_keyword.at(palabra))));
+				} else if (m_tipos.find(palabra) != m_tipos.end()) {
+					tokens_.push_back(std::make_pair(token_t::TYPE, static_cast<unsigned>(m_tipos.at(palabra))));
+				} else { /// identificador
+					tokens_.push_back(std::make_pair(token_t::IDENTIFIER, 0));
+					identificadores_.push(palabra);
+				}
 			}
 			palabra.clear();
 		} else {
@@ -132,6 +136,7 @@ void Compilador::Tokenizar() {
 				tokens_.push_back(std::make_pair(token_t::OPERATOR, static_cast<unsigned>(m_operator.at(palabra))));
 			}
 		}
+		palabra.clear();
 	}
 }
 

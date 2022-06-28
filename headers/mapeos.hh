@@ -60,8 +60,7 @@ const std::map<char, symbol_e> m_symbol{
 		{'>', symbol_e::COMILLAAN_C},
 		{';', symbol_e::PUNTOYCOMA},
 		{'\'', symbol_e::COMILLA},
-		{'\"', symbol_e::COMILLAS}
-		};
+		{'\"', symbol_e::COMILLAS}};
 
 const std::map<std::string, tipos_e>
 		m_tipos{
@@ -77,6 +76,7 @@ const std::map<std::string, keyword_e>
 				{"const", keyword_e::CONST},
 				{"static", keyword_e::STATIC},
 				/// control de flujo
+				{"return", keyword_e::RETURN},
 				{"for", keyword_e::FOR},
 				{"while", keyword_e::WHILE},
 				{"do", keyword_e::DO}};

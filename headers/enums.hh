@@ -45,7 +45,8 @@ enum class keyword_e {
 	/// control de flujo
 	FOR,
 	WHILE,
-	DO
+	DO,
+	RETURN
 };
 
 enum class symbol_e {
