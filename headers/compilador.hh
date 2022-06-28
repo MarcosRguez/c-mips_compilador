@@ -39,9 +39,8 @@ class Compilador {
 	/// Métodos
 
 	void Tokenizar();
-
-	void SelZeroIndent();
-	void SelNonZeroIndent();
+	void Preprocesar();
+	void Generar();
 
 	// std::string& linea();
 

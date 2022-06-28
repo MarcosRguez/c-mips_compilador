@@ -22,16 +22,13 @@ Compilador::Compilador(const std::string& source) :
 
 std::string Compilador::Compilar() {
 	try {
+		/// Generar tokens
 		Tokenizar();
+		/// Generar código fuente
+		Generar();
 	} catch (const std::runtime_error& error) {
 		std::cerr << error.what() << std::endl;
 		exit(EXIT_FAILURE);
-	}
-	/// Gettín redi
-	unsigned indent_last{0};
-	unsigned indent_current{0};
-	/// Bucle
-	while (source_index_ != source_.size()) {
 	}
 	/// Devolver resultado
 	archivo_t resultado;
@@ -44,8 +41,15 @@ std::string Compilador::Compilar() {
 	return LineaUnica(resultado);
 }
 
-void Compilador::Tokenizar() {
-	/// Preprocesar
+/**
+ * @brief Genera el código fuente
+ */
+void Compilador::Generar() {}
+
+/**
+ * @brief Preprocesa el source_
+ */
+void Compilador::Preprocesar() {
 	for (auto& i : source_) {
 		if (i == '\n' || i == '\t') i = ' ';
 	}
@@ -60,6 +64,14 @@ void Compilador::Tokenizar() {
 		}
 		last = source_[i];
 	}
+}
+
+/**
+ * @brief Genera los tokens
+ */
+void Compilador::Tokenizar() {
+	/// Preprocesar
+	Preprocesar();
 	/// preprocesado acabado
 	std::string palabra;
 	bool preprocesado{false};
@@ -100,7 +112,7 @@ void Compilador::Tokenizar() {
 				/// Flags
 				if (preprocesado) {
 					if (m_directivas.find(palabra) == m_directivas.end()) {
-						throw std::runtime_error{"Error en la línea " + std::to_string(i + 1) + ": directiva desconocida."};
+						throw std::runtime_error{"Error en el caractér " + std::to_string(i + 1) + ": directiva desconocida."};
 					}
 					palabra.clear();
 					continue;
@@ -139,6 +151,3 @@ void Compilador::Tokenizar() {
 		palabra.clear();
 	}
 }
-
-void Compilador::SelZeroIndent() {}
-void Compilador::SelNonZeroIndent() {}
