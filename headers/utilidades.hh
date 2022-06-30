@@ -26,6 +26,7 @@ void EliminarLineasVacias(archivo_t&);
 void EliminarCaracteresFantasmas(archivo_t&);
 void EliminarIndentacion(archivo_t&);
 void EliminarEspacios(archivo_t&);
+bool MatchingBrackets(const std::string& sample);
 void EliminarCorchetes(archivo_t&);
 void EliminarBarrasInvertidas(archivo_t&);
 unsigned EncontrarFinFuncion(const archivo_t&, unsigned);

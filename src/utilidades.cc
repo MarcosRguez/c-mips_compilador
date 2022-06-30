@@ -86,6 +86,53 @@ void CrearArchivo(const std::string& filename_out, const std::string& ruta,
 	file.close();
 }
 
+bool MatchingBrackets(const std::string& sample) {
+	int parentesis = 0;
+	int corchetes = 0;
+	int llaves = 0;
+	/// 1: parentesis++ ; 2: corchetes++ ; 3: llaves++ ;
+	/// -1: parentesis-- ; -2: corchetes-- ; -3: llaves-- ;
+	int last_increased = 0;
+	int pre_last_increased = 0;
+	for (std::size_t i = 0; i < sample.length(); i++) {
+		pre_last_increased = last_increased;
+		/// conteo de cada tipo
+		if (sample[i] == '(') {
+			parentesis++;
+			last_increased = 1;
+		} else if (sample[i] == ')') {
+			parentesis--;
+			last_increased = -1;
+		} else if (sample[i] == '[') {
+			corchetes++;
+			last_increased = 2;
+		} else if (sample[i] == ']') {
+			corchetes--;
+			last_increased = -2;
+		} else if (sample[i] == '{') {
+			llaves++;
+			last_increased = 3;
+		} else if (sample[i] == '}') {
+			llaves--;
+			last_increased = -3;
+		}
+		/// incongruencia
+		if ((parentesis < 0) || (corchetes < 0) || (llaves < 0)) {
+			return false;
+		}
+		/// inanidación
+		if ((last_increased < 0) && (pre_last_increased > 0) && (pre_last_increased != abs(last_increased)) && (i > 0)) {
+			return false;
+		}
+	}
+	/// están bien cerrados
+	if ((parentesis == 0) && (corchetes == 0) && (llaves == 0)) {
+		return true;
+	}
+	/// no están bien cerrados
+	return false;
+}
+
 /**
  * @brief Crear archivo a partir de cadena
  * @param filename_out

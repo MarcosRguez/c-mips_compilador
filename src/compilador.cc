@@ -15,6 +15,7 @@
 
 #include <iostream>
 #include <stdexcept>
+#include <cassert>
 
 Compilador::Compilador(const std::string& source) :
 		source_{source},
@@ -22,9 +23,13 @@ Compilador::Compilador(const std::string& source) :
 
 std::string Compilador::Compilar() {
 	try {
+		/// En matchingamos los brakets
+		if (!MatchingBrackets(source_)) throw std::runtime_error("los brakest no matchingn");
 		/// Generar tokens
 		Tokenizar();
 		/// Generar código fuente
+		data_segment_.push_back(".data");
+		text_segment_.push_back(".text");
 		Generar();
 	} catch (const std::runtime_error& error) {
 		std::cerr << error.what() << std::endl;
@@ -44,7 +49,77 @@ std::string Compilador::Compilar() {
 /**
  * @brief Genera el código fuente
  */
-void Compilador::Generar() {}
+void Compilador::Generar() {
+	std::string alcance;
+	bool tipo{false};
+	bool ambito_puro{true};
+	bool return_literal{false};
+	for (int i{0}; i < tokens_.size(); i++) {
+		switch (tokens_[i].first) {
+			case token_t::IDENTIFIER:
+				if (alcance.empty()) {
+					/// Es una definición de función (o declaración)
+					if (tokens_[i + 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::PARENTESIS_A) {
+						/// Escribimos la entrada de subrutina
+						text_segment_.push_back(identificadores_.front() + ':');
+						/// actualizamos el alcance
+						alcance = identificadores_.front();
+						identificadores_.pop();
+						/// entrada de función marco de pila...
+						text_segment_.push_back("move $fp,$sp");
+						text_segment_.push_back("addi $sp,$sp,-4");
+						text_segment_.push_back("sw $ra,0($sp)");
+					}
+					/// es una variable global
+					else if (tokens_[i + 1].first == token_t::OPERATOR && static_cast<operator_e>(tokens_[i + 1].second) == operator_e::ASIGNACION) {
+					}
+				} else {
+				}
+				break;
+			case token_t::KEYWORD:
+				switch (static_cast<keyword_e>(tokens_[i].second)) {
+					case keyword_e::WHILE:
+						assert(tokens_[i + 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::PARENTESIS_A);
+						ambito_puro = false;
+						break;
+					case keyword_e::FOR:
+						ambito_puro = false;
+						break;
+					case keyword_e::RETURN:
+						switch (tokens_[i + 1].first) {
+							case token_t::LITERAL:
+								text_segment_.push_back("li $v0,");
+								return_literal = true;
+								break;
+							default:
+								break;
+						}
+						break;
+					default:
+						break;
+				}
+				break;
+			case (token_t::LITERAL):
+				if (return_literal) {
+					switch (static_cast<literal_e>(tokens_[i].second)) {
+						case (literal_e::INT):
+							text_segment_.back().append(std::to_string(int_literales_.front()));
+							int_literales_.pop();
+							break;
+						default:
+							break;
+					}
+					return_literal = false;
+				}
+				break;
+			case (token_t::SYMBOL): break;
+			case (token_t::OPERATOR): break;
+			case (token_t::TYPE):
+				tipo = true;
+				break;
+		}
+	}
+}
 
 /**
  * @brief Preprocesa el source_
@@ -109,6 +184,7 @@ void Compilador::Tokenizar() {
 				while (isalnum(source_[i]) || source_[i] == '_') {
 					palabra.push_back(source_[i++]);
 				}
+				i--;
 				/// Flags
 				if (preprocesado) {
 					if (m_directivas.find(palabra) == m_directivas.end()) {
