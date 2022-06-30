@@ -36,11 +36,18 @@ class Compilador {
 	std::queue<std::string> identificadores_{};
 	std::queue<std::string> str_literales_{};
 	std::queue<int> int_literales_{};
+	int bucle_while_count_{};
+	int bucle_for_count_{};
 	/// Métodos
 
 	void Tokenizar();
 	void Preprocesar();
 	void Generar();
+
+	archivo_t EvaluadorExpresiones(int, int);
+	archivo_t EvaluadorBool(int, int);
+
+	int NextMatching(int);
 
 	// std::string& linea();
 

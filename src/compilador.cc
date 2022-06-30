@@ -46,6 +46,82 @@ std::string Compilador::Compilar() {
 	return LineaUnica(resultado);
 }
 
+archivo_t Compilador::EvaluadorExpresiones(int index, int n_tokens) {}
+archivo_t Compilador::EvaluadorBool(int index, int n_tokens) {}
+
+/**
+ * @brief Devuelve el índice de coso que cierra
+ * @param index
+ * @return int
+ */
+int Compilador::NextMatching(int index) {
+	assert(tokens_[index].first == token_t::SYMBOL);
+	int apertura{1};
+	int cerrura{0};
+	switch (static_cast<symbol_e>(tokens_[index].second)) {
+		case (symbol_e::PARENTESIS_A):
+			while (apertura != cerrura) {
+				switch (static_cast<symbol_e>(tokens_[++index].second)) {
+					case (symbol_e::PARENTESIS_A):
+						apertura++;
+						break;
+					case (symbol_e::PARENTESIS_C):
+						cerrura++;
+						break;
+					default:
+						break;
+				}
+			}
+			break;
+		case (symbol_e::CORCHETE_A):
+			while (apertura != cerrura) {
+				switch (static_cast<symbol_e>(tokens_[++index].second)) {
+					case (symbol_e::CORCHETE_A):
+						apertura++;
+						break;
+					case (symbol_e::CORCHETE_C):
+						cerrura++;
+						break;
+					default:
+						break;
+				}
+			}
+			break;
+		case (symbol_e::LLAVE_A):
+			while (apertura != cerrura) {
+				switch (static_cast<symbol_e>(tokens_[++index].second)) {
+					case (symbol_e::LLAVE_A):
+						apertura++;
+						break;
+					case (symbol_e::LLAVE_C):
+						cerrura++;
+						break;
+					default:
+						break;
+				}
+			}
+			break;
+		case (symbol_e::COMILLAAN_A):
+			while (apertura != cerrura) {
+				switch (static_cast<symbol_e>(tokens_[++index].second)) {
+					case (symbol_e::COMILLAAN_A):
+						apertura++;
+						break;
+					case (symbol_e::COMILLAAN_C):
+						cerrura++;
+						break;
+					default:
+						break;
+				}
+			}
+			break;
+		default:
+			throw "error coño";
+			break;
+	}
+	return index;
+}
+
 /**
  * @brief Genera el código fuente
  */
@@ -56,7 +132,7 @@ void Compilador::Generar() {
 	bool return_literal{false};
 	for (int i{0}; i < tokens_.size(); i++) {
 		switch (tokens_[i].first) {
-			case token_t::IDENTIFIER:
+			case (token_t::IDENTIFIER):
 				if (alcance.empty()) {
 					/// Es una definición de función (o declaración)
 					if (tokens_[i + 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::PARENTESIS_A) {
@@ -76,18 +152,28 @@ void Compilador::Generar() {
 				} else {
 				}
 				break;
-			case token_t::KEYWORD:
+			case (token_t::KEYWORD):
 				switch (static_cast<keyword_e>(tokens_[i].second)) {
-					case keyword_e::WHILE:
+					case (keyword_e::WHILE): {
 						assert(tokens_[i + 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::PARENTESIS_A);
 						ambito_puro = false;
+						text_segment_.push_back(alcance + "_while" + std::to_string(bucle_while_count_++) + ':');
+						auto temp = EvaluadorBool(i + 1, i + 1 - NextMatching(i));
+						for (const auto& cosa : temp) {
+							text_segment_.push_back(cosa);
+						}
+						text_segment_.push_back(alcance + "_while" + std::to_string(bucle_for_count_++) + "_fin" + ':');
 						break;
-					case keyword_e::FOR:
+					}
+					case (keyword_e::FOR): {
+						assert(tokens_[i + 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::PARENTESIS_A);
 						ambito_puro = false;
+						//// evaluador de expresiones
 						break;
-					case keyword_e::RETURN:
+					}
+					case (keyword_e::RETURN): {
 						switch (tokens_[i + 1].first) {
-							case token_t::LITERAL:
+							case (token_t::LITERAL):
 								text_segment_.push_back("li $v0,");
 								return_literal = true;
 								break;
@@ -95,8 +181,10 @@ void Compilador::Generar() {
 								break;
 						}
 						break;
-					default:
+					}
+					default: {
 						break;
+					}
 				}
 				break;
 			case (token_t::LITERAL):
