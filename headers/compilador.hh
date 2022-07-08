@@ -23,6 +23,12 @@ using registros_t = std::map<std::string, bool>;
 struct variables_t {
 	tipos_e tipo;
 	std::string nombre;
+	std::string registro;
+};
+
+struct Eval_f_t {
+	archivo_t contenido{};
+	bool literal{false};
 };
 
 class Compilador {
@@ -47,33 +53,19 @@ class Compilador {
 	int bucle_for_count_{};
 	registros_t registros_temporales_{};
 	registros_t registros_salvados_{};
+	std::vector<variables_t> variables_{};
 	/// Métodos
 
 	void Tokenizar();
 	void Preprocesar();
 	void Generar();
 
-	archivo_t EvaluadorExpresiones(int, int);
-	archivo_t EvaluadorBool(int, int);
+	Eval_f_t EvaluadorExpresiones(int, int);
+	Eval_f_t EvaluadorBool(int, int);
 
 	std::string EncontrarRegistroLibre(
 			const registros_t&) const;
 	int NextMatching(int);
-	void WriteBuffer(const archivo_t&);
-
-	// std::string& linea();
-
-	/// Chuchangas friend?
-
-	void Funciones();
-	void LlamadaFunciones();
-	void Ostream();
-	void Istream();
-	void For();
-	void While();
-	void Elif();
-	void ReturnBool();
-	void Return();
-	void GlobalVar();
-	void LocalVar();
+	int NextPuntoYComa(int);
+	void WriteBuffer(const archivo_t&, bool);
 };

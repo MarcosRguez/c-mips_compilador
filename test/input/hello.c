@@ -1,6 +1,6 @@
 int main() {
-	int a;
-	for (int i = 0; i < 6; i++) {
+	int a{4};
+	while (true) {
 		a++;
 	}
 	return 0;
