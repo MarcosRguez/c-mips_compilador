@@ -243,8 +243,7 @@ void Compilador::var_init(archivo_t& segment, int& i) {
  */
 void Compilador::Generar() {
 	std::string func_name;
-	bool end_while_loop{false};
-	bool end_for_loop{false};
+	int end_loop{0};
 	int local_for_n_bucle{0};
 	for (int i{0}; i < tokens_.size(); i++) {
 		auto token = tokens_[i].first;
@@ -284,7 +283,7 @@ void Compilador::Generar() {
 					} else {
 						throw std::runtime_error{"tipo de var global no soportado"};
 					}
-					var_init(data_segment_, i);
+					var_init(data_segment_, i); /// solo dios sabe si esto funciona
 				}
 			} else {
 				/// es una declaración de variable local
@@ -307,30 +306,36 @@ void Compilador::Generar() {
 				const auto&& temp{EvaluadorBool(i + 2, NextMatching(i + 1) - (i + 2))};
 				if (temp.literal) throw std::runtime_error{"desgraciado, has escrito un bucle infinito"};
 				WriteBuffer(temp.contenido, false);
-				// text_segment_.push_back(alcance + "_while" + std::to_string(bucle_for_count_++) + "_fin" + ':');
 				/// establecer flag y analizar token '}'
-				end_while_loop = true;
+				archivo_t buffer;
+				buffer.push_back("b " + func_name + "_while" + std::to_string(bucle_while_count_ - 1));
+				buffer.push_back(func_name + "_while" + std::to_string(bucle_while_count_ - 1) + '_');
+				cerrar_bucles_.push(buffer);
+				end_loop++;
 			} else if (tipo == keyword_e::FOR) {
 				assert(tokens_[i + 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::PARENTESIS_A);
 				int n_tokens{0};
 				while (!(tokens_[i + 2 + n_tokens].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i + 2 + n_tokens].second) == symbol_e::PUNTOYCOMA)) {
 					n_tokens++;
 				}
+				/// inicializar el iterador
 				WriteBuffer(EvaluadorExpresiones(i + 2, n_tokens).contenido, false);
+				/// escribir la etiqueta
 				text_segment_.push_back(func_name + "_for" + std::to_string(local_for_n_bucle));
-				// WriteBuffer(EvaluadorExpresiones(i + 2 + n_tokens, n_tokens));
-
+				/// escribir la condición
+				// WriteBuffer(EvaluadorBool());
+				/// poner lo de cerrar el bucle en la pila de cerrar bucles
+				end_loop++;
 			} else if (tipo == keyword_e::RETURN) {
 				/// evaluar la expresión y hacer branch
 			}
 		} else if (token == token_t::SYMBOL) {
 			/// suponemos que todas las demás llaves que no sean de funciones las hemos saltado
 			if (static_cast<symbol_e>(tokens_[i].second) == symbol_e::LLAVE_C) {
-				if (end_while_loop) {
-					text_segment_.push_back("b " + func_name + "_while" + std::to_string(bucle_while_count_ - 1));
-					text_segment_.push_back(func_name + "_while" + std::to_string(bucle_while_count_ - 1) + '_');
-					end_while_loop = false; /// aquí hay que usar el stack de cierres de bucles
-				} else if (end_for_loop) {
+				if (end_loop > 0) {
+					WriteBuffer(cerrar_bucles_.top());
+					cerrar_bucles_.pop();
+					end_loop--;
 				} else {
 					if (func_name != "main") {
 						text_segment_.push_back(func_name + "_return:");

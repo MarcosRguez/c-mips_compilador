@@ -56,7 +56,7 @@ class Compilador {
 	registros_t registros_temporales_{};
 	registros_t registros_salvados_{};
 	std::vector<variables_t> variables_{};
-	std::stack<int> cerrar_bucles_{};
+	std::stack<archivo_t> cerrar_bucles_{};
 	/// Métodos
 
 	void Tokenizar();
