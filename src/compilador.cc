@@ -57,6 +57,7 @@ Eval_f_t Compilador::EvaluadorExpresiones(const int index, const int n_tokens) {
 	/// caso base: literal
 	/// caso base: identificador
 	Eval_f_t resultado;
+	if (n_tokens == 0) return resultado;
 	for (int i{index}; i < index + n_tokens; i++) {
 		if (tokens_[i].first == token_t::LITERAL) {
 			/// Devolver el literal
@@ -81,7 +82,19 @@ Eval_f_t Compilador::EvaluadorExpresiones(const int index, const int n_tokens) {
 	return resultado;
 }
 
-Eval_f_t Compilador::EvaluadorBool(int index, int n_tokens) {}
+Eval_f_t Compilador::EvaluadorBool(int index, int n_tokens) {
+	Eval_f_t resultado;
+	if (n_tokens == 0) return resultado;
+	if (n_tokens == 1) {
+		assert(tokens_[index].first == token_t::LITERAL && static_cast<literal_e>(tokens_[index].second) == literal_e::BOOL);
+		bool temp{bool_literales_.front()};
+		bool_literales_.pop();
+		return temp;
+	}
+	for (int i{index}; i < index + n_tokens; i++) {
+	}
+	return resultado;
+}
 
 void Compilador::WriteBuffer(const archivo_t& buffer, bool ans) {
 	if (buffer.empty()) return;
@@ -218,7 +231,7 @@ void Compilador::Generar() {
 				else if (tokens_[i + 1].first == token_t::OPERATOR && static_cast<operator_e>(tokens_[i + 1].second) == operator_e::ASIGNACION) {
 				}
 			} else {
-				/// es una declaración de variable
+				/// es una declaración de variable local
 				variables_t&& temp{static_cast<tipos_e>(tokens_[i - 1].second), identificadores_.front(), EncontrarRegistroLibre(registros_salvados_)};
 				variables_.push_back(temp);
 				identificadores_.pop();
@@ -368,6 +381,14 @@ void Compilador::Tokenizar() {
 					tokens_.push_back(std::make_pair(token_t::KEYWORD, static_cast<unsigned>(m_keyword.at(palabra))));
 				} else if (m_tipos.find(palabra) != m_tipos.end()) {
 					tokens_.push_back(std::make_pair(token_t::TYPE, static_cast<unsigned>(m_tipos.at(palabra))));
+				} else if (m_literal.find(palabra) != m_literal.end()) {
+					/// bool true false
+					tokens_.push_back(std::make_pair(token_t::LITERAL, static_cast<unsigned>(m_literal.at(palabra))));
+					if (palabra == "true") {
+						bool_literales_.push(true);
+					} else {
+						bool_literales_.push(false);
+					}
 				} else { /// identificador
 					tokens_.push_back(std::make_pair(token_t::IDENTIFIER, 0));
 					identificadores_.push(palabra);

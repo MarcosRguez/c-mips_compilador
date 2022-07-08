@@ -23,7 +23,8 @@ enum class token_t {
 enum class literal_e {
 	STR,
 	INT,
-	DOUBLE
+	DOUBLE,
+	BOOL
 };
 
 enum class directivas_e {

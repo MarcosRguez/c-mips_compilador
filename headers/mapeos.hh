@@ -83,3 +83,7 @@ const std::map<std::string, keyword_e>
 
 const std::map<std::string, directivas_e> m_directivas{
 		{"include", directivas_e::INCLUDE}};
+
+const std::map<std::string, literal_e> m_literal{
+		{"true", literal_e::BOOL},
+		{"false", literal_e::BOOL}};

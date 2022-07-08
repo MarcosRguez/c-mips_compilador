@@ -49,6 +49,7 @@ class Compilador {
 	std::queue<std::string> identificadores_{};
 	std::queue<std::string> str_literales_{};
 	std::queue<int> int_literales_{};
+	std::queue<bool> bool_literales_{};
 	int bucle_while_count_{};
 	int bucle_for_count_{};
 	registros_t registros_temporales_{};
