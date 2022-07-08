@@ -1,7 +1,11 @@
 .data
 .text
 main:
-move $fp,$sp
-addi $sp,$sp,-4
-sw $ra,0($sp)
-li $v0,0
+main_return:
+lw $ra,0($sp)
+move $sp,$fp
+jr $ra
+_return:
+lw $ra,0($sp)
+move $sp,$fp
+jr $ra

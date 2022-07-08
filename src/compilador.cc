@@ -19,7 +19,14 @@
 
 Compilador::Compilador(const std::string& source) :
 		source_{source},
-		source_index_{0} {}
+		source_index_{0} {
+	for (int i{0}; i <= 9; i++) {
+		registros_temporales_.emplace("$t" + std::to_string(i), false);
+	}
+	for (int i{0}; i <= 8; i++) {
+		registros_salvados_.emplace("$s" + std::to_string(i), false);
+	}
+}
 
 std::string Compilador::Compilar() {
 	try {
@@ -48,6 +55,12 @@ std::string Compilador::Compilar() {
 
 archivo_t Compilador::EvaluadorExpresiones(int index, int n_tokens) {}
 archivo_t Compilador::EvaluadorBool(int index, int n_tokens) {}
+
+void Compilador::WriteBuffer(const archivo_t& buffer) {
+	for (const auto& i : buffer) {
+		text_segment_.push_back(i);
+	}
+}
 
 /**
  * @brief Devuelve el índice de coso que cierra
@@ -122,89 +135,98 @@ int Compilador::NextMatching(int index) {
 	return index;
 }
 
+std::string Compilador::EncontrarRegistroLibre(
+		const registros_t& registros) const {
+	for (const auto& i : registros) {
+		if (i.second == false) {
+			return i.first;
+		}
+	}
+	return NULL;
+}
+
 /**
  * @brief Genera el código fuente
  */
 void Compilador::Generar() {
 	std::string alcance;
-	bool tipo{false};
 	bool ambito_puro{true};
 	bool return_literal{false};
+	std::string func_name;
+	int local_for_n_bucle{0};
 	for (int i{0}; i < tokens_.size(); i++) {
-		switch (tokens_[i].first) {
-			case (token_t::IDENTIFIER):
-				if (alcance.empty()) {
-					/// Es una definición de función (o declaración)
-					if (tokens_[i + 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::PARENTESIS_A) {
-						/// Escribimos la entrada de subrutina
-						text_segment_.push_back(identificadores_.front() + ':');
-						/// actualizamos el alcance
-						alcance = identificadores_.front();
-						identificadores_.pop();
-						/// entrada de función marco de pila...
+		auto token = tokens_[i].first;
+		if (token == token_t::IDENTIFIER) {
+			if (alcance.empty()) {
+				/// Es una definición de función (o declaración)
+				if (tokens_[i + 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::PARENTESIS_A) {
+					/// Escribimos la entrada de subrutina
+					text_segment_.push_back(identificadores_.front() + ':');
+					/// actualizamos el alcance
+					alcance = identificadores_.front();
+					func_name = identificadores_.front();
+					identificadores_.pop();
+					/// entrada de función marco de pila...
+					if (alcance != "main") {
 						text_segment_.push_back("move $fp,$sp");
 						text_segment_.push_back("addi $sp,$sp,-4");
 						text_segment_.push_back("sw $ra,0($sp)");
-					}
-					/// es una variable global
-					else if (tokens_[i + 1].first == token_t::OPERATOR && static_cast<operator_e>(tokens_[i + 1].second) == operator_e::ASIGNACION) {
-					}
-				} else {
-				}
-				break;
-			case (token_t::KEYWORD):
-				switch (static_cast<keyword_e>(tokens_[i].second)) {
-					case (keyword_e::WHILE): {
-						assert(tokens_[i + 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::PARENTESIS_A);
-						ambito_puro = false;
-						text_segment_.push_back(alcance + "_while" + std::to_string(bucle_while_count_++) + ':');
-						auto temp = EvaluadorBool(i + 1, i + 1 - NextMatching(i));
-						for (const auto& cosa : temp) {
-							text_segment_.push_back(cosa);
-						}
-						text_segment_.push_back(alcance + "_while" + std::to_string(bucle_for_count_++) + "_fin" + ':');
-						break;
-					}
-					case (keyword_e::FOR): {
-						assert(tokens_[i + 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::PARENTESIS_A);
-						ambito_puro = false;
-						//// evaluador de expresiones
-						break;
-					}
-					case (keyword_e::RETURN): {
-						switch (tokens_[i + 1].first) {
-							case (token_t::LITERAL):
-								text_segment_.push_back("li $v0,");
-								return_literal = true;
-								break;
-							default:
-								break;
-						}
-						break;
-					}
-					default: {
-						break;
+					} else {
+						/// skip main argrs
 					}
 				}
-				break;
-			case (token_t::LITERAL):
-				if (return_literal) {
-					switch (static_cast<literal_e>(tokens_[i].second)) {
-						case (literal_e::INT):
-							text_segment_.back().append(std::to_string(int_literales_.front()));
-							int_literales_.pop();
-							break;
-						default:
-							break;
-					}
-					return_literal = false;
+				/// es una variable global
+				else if (tokens_[i + 1].first == token_t::OPERATOR && static_cast<operator_e>(tokens_[i + 1].second) == operator_e::ASIGNACION) {
 				}
-				break;
-			case (token_t::SYMBOL): break;
-			case (token_t::OPERATOR): break;
-			case (token_t::TYPE):
-				tipo = true;
-				break;
+			} else {
+				/// es una declaración de variable
+			}
+		} else if (token == token_t::KEYWORD) {
+			auto tipo{static_cast<keyword_e>(tokens_[i].second)};
+			if (tipo == keyword_e::WHILE) {
+				assert(tokens_[i + 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::PARENTESIS_A);
+				ambito_puro = false;
+				text_segment_.push_back(alcance + "_while" + std::to_string(bucle_while_count_++) + ':');
+				auto temp = EvaluadorBool(i + 1, i + 1 - NextMatching(i));
+				for (const auto& cosa : temp) {
+					text_segment_.push_back(cosa);
+				}
+				text_segment_.push_back(alcance + "_while" + std::to_string(bucle_for_count_++) + "_fin" + ':');
+			} else if (tipo == keyword_e::FOR) {
+				assert(tokens_[i + 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::PARENTESIS_A);
+				ambito_puro = false;
+				//// evaluador de expresiones
+				int n_tokens{0};
+				while (!(tokens_[i + 2 + n_tokens].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i + 2 + n_tokens].second) == symbol_e::PUNTOYCOMA)) {
+					n_tokens++;
+				}
+				WriteBuffer(EvaluadorExpresiones(i + 2, n_tokens));
+				text_segment_.push_back(func_name + "_for" + std::to_string(local_for_n_bucle));
+			} else if (tipo == keyword_e::RETURN) {
+				/// evaluar la expresión y hacer branch
+			}
+		} else if (token == token_t::LITERAL) {
+			if (return_literal) {
+				switch (static_cast<literal_e>(tokens_[i].second)) {
+					case (literal_e::INT):
+						text_segment_.back().append(std::to_string(int_literales_.front()));
+						int_literales_.pop();
+						break;
+					default:
+						break;
+				}
+				return_literal = false;
+			}
+		} else if (token == token_t::SYMBOL) {
+			/// suponemos que todas las demás llaves que no sean de funciones las hemos saltado
+			if (static_cast<symbol_e>(tokens_[i].second) == symbol_e::LLAVE_C) {
+				text_segment_.push_back(func_name + "_return:");
+				text_segment_.push_back("lw $ra,0($sp)");
+				text_segment_.push_back("move $sp,$fp");
+				text_segment_.push_back("jr $ra");
+				func_name.clear();
+				alcance.clear();
+			}
 		}
 	}
 }

@@ -18,6 +18,13 @@
 #include <map>
 #include <queue>
 
+using registros_t = std::map<std::string, bool>;
+
+struct variables_t {
+	tipos_e tipo;
+	std::string nombre;
+};
+
 class Compilador {
  public:
 	/// Constructor estándar
@@ -38,6 +45,8 @@ class Compilador {
 	std::queue<int> int_literales_{};
 	int bucle_while_count_{};
 	int bucle_for_count_{};
+	registros_t registros_temporales_{};
+	registros_t registros_salvados_{};
 	/// Métodos
 
 	void Tokenizar();
@@ -47,7 +56,10 @@ class Compilador {
 	archivo_t EvaluadorExpresiones(int, int);
 	archivo_t EvaluadorBool(int, int);
 
+	std::string EncontrarRegistroLibre(
+			const registros_t&) const;
 	int NextMatching(int);
+	void WriteBuffer(const archivo_t&);
 
 	// std::string& linea();
 
