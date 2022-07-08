@@ -66,6 +66,7 @@ class Compilador {
 	Eval_f_t EvaluadorExpresiones(int, int);
 	Eval_f_t EvaluadorBool(int, int);
 
+	void Compilador::var_init(archivo_t& segment, int&);
 	std::string EncontrarRegistroLibre(
 			const registros_t&) const;
 	int NextMatching(int);

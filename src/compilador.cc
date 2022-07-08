@@ -205,6 +205,39 @@ int Compilador::NextPuntoYComa(int index) {
 	return index;
 }
 
+void Compilador::var_init(archivo_t& segment, int& i) {
+	if (tokens_[i + 1].first == token_t::SYMBOL) {
+		if (static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::PUNTOYCOMA) {
+			/// no está init
+			text_segment_.back().push_back('0');
+		} else if (static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::LLAVE_A) {
+			/// evaluar la expresión entre los corchetes
+			const auto&& temp{EvaluadorExpresiones(i + 2, NextMatching(i + 1) - (i + 1))};
+			if (temp.literal) {
+				text_segment_.back().append(temp.contenido[0]);
+			} else {
+				WriteBuffer(temp.contenido, true);
+			}
+			/// saltar los tokens analizados
+			i = NextPuntoYComa(i);
+		}
+	} else if (tokens_[i + 1].first == token_t::OPERATOR) {
+		if (static_cast<operator_e>(tokens_[i + 1].second) == operator_e::ASIGNACION) {
+			const auto&& temp{EvaluadorExpresiones(i + 2, NextPuntoYComa(i + 2) - (i + 2))};
+			if (temp.literal) {
+				text_segment_.back().append(temp.contenido[0]);
+			} else {
+				WriteBuffer(temp.contenido, true);
+			}
+			i = NextPuntoYComa(i);
+		} else {
+			throw std::runtime_error{"error de sintaxis"};
+		}
+	} else {
+		throw std::runtime_error{"error de sintaxis"};
+	}
+}
+
 /**
  * @brief Genera el código fuente
  */
@@ -217,6 +250,7 @@ void Compilador::Generar() {
 		auto token = tokens_[i].first;
 		if (token == token_t::IDENTIFIER) {
 			if (func_name.empty()) {
+				assert(tokens_[i - 1].first == token_t::TYPE);
 				/// Es una definición de función (o declaración)
 				if (tokens_[i + 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::PARENTESIS_A) {
 					/// Escribimos la entrada de subrutina
@@ -235,48 +269,35 @@ void Compilador::Generar() {
 				}
 				/// es una variable global
 				else if (tokens_[i + 1].first == token_t::OPERATOR && static_cast<operator_e>(tokens_[i + 1].second) == operator_e::ASIGNACION) {
+					/// data_Segmetn
+					data_segment_.push_back(identificadores_.front() + ':');
+					identificadores_.pop();
+					const auto& temp{static_cast<tipos_e>(tokens_[i - 1].second)};
+					if (temp == tipos_e::INT) {
+						data_segment_.back().append(".word");
+					} else if (temp == tipos_e::FLOAT) {
+						data_segment_.back().append(".float");
+					} else if (temp == tipos_e::DOUBLE) {
+						data_segment_.back().append(".double");
+					} else if (temp == tipos_e::CHAR) {
+						data_segment_.back().append(".byte");
+					} else {
+						throw std::runtime_error{"tipo de var global no soportado"};
+					}
+					var_init(data_segment_, i);
 				}
 			} else {
 				/// es una declaración de variable local
 				variables_t&& temp{static_cast<tipos_e>(tokens_[i - 1].second), identificadores_.front(), EncontrarRegistroLibre(registros_salvados_)};
 				variables_.push_back(temp);
 				identificadores_.pop();
-				registros_salvados_.at(variables_.back().registro) = true; ///¿Poner los registros alvados únicos para cada función?
+				registros_salvados_.at(variables_.back().registro) = true; ///¿Poner los registros salvados únicos para cada función?
 				/// lo ponemos
 				text_segment_.push_back("li ");
 				text_segment_.back().append(variables_.back().registro);
 				text_segment_.back().append(",");
 				/// comprobamos si está inizializado
-				if (tokens_[i + 1].first == token_t::SYMBOL) {
-					if (static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::PUNTOYCOMA) {
-						/// no está init
-						text_segment_.back().push_back('0');
-					} else if (static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::LLAVE_A) {
-						/// evaluar la expresión entre los corchetes
-						const auto&& temp{EvaluadorExpresiones(i + 2, NextMatching(i + 1) - (i + 1))};
-						if (temp.literal) {
-							text_segment_.back().append(temp.contenido[0]);
-						} else {
-							WriteBuffer(temp.contenido, true);
-						}
-						/// saltar los tokens analizados
-						i = NextPuntoYComa(i);
-					}
-				} else if (tokens_[i + 1].first == token_t::OPERATOR) {
-					if (static_cast<operator_e>(tokens_[i + 1].second) == operator_e::ASIGNACION) {
-						const auto&& temp{EvaluadorExpresiones(i + 2, NextPuntoYComa(i + 2) - (i + 2))};
-						if (temp.literal) {
-							text_segment_.back().append(temp.contenido[0]);
-						} else {
-							WriteBuffer(temp.contenido, true);
-						}
-						i = NextPuntoYComa(i);
-					} else {
-						throw std::runtime_error{"error de sintaxis"};
-					}
-				} else {
-					throw std::runtime_error{"error de sintaxis"};
-				}
+				var_init(text_segment_, i);
 			}
 		} else if (token == token_t::KEYWORD) {
 			auto tipo{static_cast<keyword_e>(tokens_[i].second)};
@@ -308,7 +329,7 @@ void Compilador::Generar() {
 				if (end_while_loop) {
 					text_segment_.push_back("b " + func_name + "_while" + std::to_string(bucle_while_count_ - 1));
 					text_segment_.push_back(func_name + "_while" + std::to_string(bucle_while_count_ - 1) + '_');
-					end_while_loop = false;
+					end_while_loop = false; /// aquí hay que usar el stack de cierres de bucles
 				} else if (end_for_loop) {
 				} else {
 					if (func_name != "main") {
