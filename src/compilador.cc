@@ -223,6 +223,11 @@ int Compilador::NextPuntoYComa(int index) {
 	return index;
 }
 
+/**
+ * @brief para inizializar las variables
+ * @param buffer el buffer donde se anexa el literal
+ * @param index	el índice del identificador
+ */
 void Compilador::var_init(archivo_t& buffer, int& index) {
 	if (tokens_[index + 1].first == token_t::SYMBOL) {
 		if (static_cast<symbol_e>(tokens_[index + 1].second) == symbol_e::PUNTOYCOMA) {
