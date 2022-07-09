@@ -1,8 +1,6 @@
 int main() {
-	for (int i = 0; i < 5; i++) {
-	}
 	bool alfa = true;
-	while (alfa) {
+	if (alfa) {
 	}
 	return 0;
 }

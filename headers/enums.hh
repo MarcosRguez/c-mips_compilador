@@ -45,9 +45,11 @@ enum class keyword_e {
 	CONST,
 	STATIC,
 	/// control de flujo
-	FOR,
+	IF,
+	ELSE,
 	WHILE,
 	DO,
+	FOR,
 	RETURN
 };
 
@@ -81,6 +83,10 @@ enum class operator_e {
 	/// incremento y decremento
 	INCREMENTO,
 	DECREMENTO,
+	/// Lógica
+	NOT,
+	AND,
+	OR,
 	/// comparación
 	MENORQUE,
 	MAYORQUE,

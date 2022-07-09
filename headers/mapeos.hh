@@ -31,6 +31,10 @@ const std::map<std::string, operator_e> m_operator{
 		/// incremento y decremento
 		{"++", operator_e::INCREMENTO},
 		{"--", operator_e::DECREMENTO},
+		/// Lógica
+		{"!", operator_e::NOT},
+		{"&&", operator_e::AND},
+		{"||", operator_e::OR},
 		/// comparación
 		{"<", operator_e::MENORQUE},
 		{">", operator_e::MAYORQUE},
@@ -77,10 +81,12 @@ const std::map<std::string, keyword_e>
 				{"const", keyword_e::CONST},
 				{"static", keyword_e::STATIC},
 				/// control de flujo
-				{"return", keyword_e::RETURN},
-				{"for", keyword_e::FOR},
+				{"if", keyword_e::IF},
+				{"else", keyword_e::ELSE},
 				{"while", keyword_e::WHILE},
-				{"do", keyword_e::DO}};
+				{"do", keyword_e::DO},
+				{"for", keyword_e::FOR},
+				{"return", keyword_e::RETURN}};
 
 const std::map<std::string, directivas_e> m_directivas{
 		{"include", directivas_e::INCLUDE}};

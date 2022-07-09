@@ -1,0 +1,7 @@
+convertir todos los condicionales a OR
+beq $t0,2,body
+beq $t0,3,body
+b endif
+body:
+	
+endif:

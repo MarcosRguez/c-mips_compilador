@@ -114,8 +114,11 @@ Eval_f_t Compilador::EvaluadorBool(int index, int n_tokens) {
 		}
 		return resultado;
 	}
+	/// meneamos las maracas 🐯🦄
 	for (int i{index}; i < index + n_tokens; i++) {
-		/// meneamos las maracas 🐯🦄
+		const auto& token{tokens_[i].first};
+		if (token == token_t::IDENTIFIER) {
+		}
 	}
 	return resultado;
 }
@@ -351,6 +354,11 @@ void Compilador::Generar() {
 				n_tokens = NextPuntoYComa(index) - index;
 				WriteBuffer(EvaluadorBool(index, n_tokens).contenido, write_buffer_e::END);
 				/// poner lo de cerrar el bucle en la pila de cerrar bucles
+				index += n_tokens + 1;
+				n_tokens = NextPuntoYComa(index) - index;
+				cerrar_bucles_.push(EvaluadorExpresiones(index, n_tokens).contenido);
+			} else if (tipo == keyword_e::IF) {
+			} else if (tipo == keyword_e::ELSE) {
 			} else if (tipo == keyword_e::RETURN) {
 				/// evaluar la expresión y hacer branch
 			}
