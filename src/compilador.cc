@@ -21,10 +21,10 @@ Compilador::Compilador(const std::string& source) :
 		source_{source},
 		source_index_{0} {
 	for (int i{0}; i <= 9; i++) {
-		registros_temporales_.emplace("$t" + std::to_string(i), false);
+		current_func.registros_temporales_.emplace("$t" + std::to_string(i), false);
 	}
 	for (int i{0}; i <= 8; i++) {
-		registros_salvados_.emplace("$s" + std::to_string(i), false);
+		current_func.registros_salvados_.emplace("$s" + std::to_string(i), false);
 	}
 }
 
@@ -58,6 +58,7 @@ Eval_f_t Compilador::EvaluadorExpresiones(const int index, const int n_tokens) {
 	/// caso base: identificador
 	Eval_f_t resultado;
 	if (n_tokens == 0) return resultado;
+	bool declaracion{false};
 	for (int i{index}; i < index + n_tokens; i++) {
 		if (tokens_[i].first == token_t::LITERAL) {
 			/// Devolver el literal
@@ -75,11 +76,27 @@ Eval_f_t Compilador::EvaluadorExpresiones(const int index, const int n_tokens) {
 					throw std::runtime_error{"literal desconocido"};
 					break;
 			}
+		} else if (tokens_[i].first == token_t::TYPE) {
+			declaracion = true;
 		} else if (tokens_[i].first == token_t::IDENTIFIER) {
-			/// comprobamos si existe en la tabla de variables
+			/// comprobamos si es una declaración
+			if (declaracion && !FindVarTable(identificadores_.front())) {
+				var_init(resultado.contenido, i);
+			}
 		}
 	}
 	return resultado;
+}
+
+bool Compilador::FindVarTable(const std::string& nombre) {
+	bool existe{false};
+	for (const auto& i : variables_) {
+		if (i.identificador == nombre) {
+			existe = true;
+			break;
+		}
+	}
+	return existe;
 }
 
 Eval_f_t Compilador::EvaluadorBool(int index, int n_tokens) {
@@ -98,13 +115,14 @@ Eval_f_t Compilador::EvaluadorBool(int index, int n_tokens) {
 		return resultado;
 	}
 	for (int i{index}; i < index + n_tokens; i++) {
+		/// meneamos las maracas 🐯🦄
 	}
 	return resultado;
 }
 
-void Compilador::WriteBuffer(const archivo_t& buffer, bool ans) {
+void Compilador::WriteBuffer(const archivo_t& buffer, write_buffer_e ans) {
 	if (buffer.empty()) return;
-	if (!ans) {
+	if (ans == write_buffer_e::END) {
 		for (const auto& i : buffer) {
 			text_segment_.push_back(i);
 		}
@@ -205,31 +223,31 @@ int Compilador::NextPuntoYComa(int index) {
 	return index;
 }
 
-void Compilador::var_init(archivo_t& segment, int& i) {
-	if (tokens_[i + 1].first == token_t::SYMBOL) {
-		if (static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::PUNTOYCOMA) {
+void Compilador::var_init(archivo_t& buffer, int& index) {
+	if (tokens_[index + 1].first == token_t::SYMBOL) {
+		if (static_cast<symbol_e>(tokens_[index + 1].second) == symbol_e::PUNTOYCOMA) {
 			/// no está init
-			text_segment_.back().push_back('0');
-		} else if (static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::LLAVE_A) {
+			buffer.back().push_back('0');
+		} else if (static_cast<symbol_e>(tokens_[index + 1].second) == symbol_e::LLAVE_A) {
 			/// evaluar la expresión entre los corchetes
-			const auto&& temp{EvaluadorExpresiones(i + 2, NextMatching(i + 1) - (i + 1))};
+			const auto&& temp{EvaluadorExpresiones(index + 2, NextMatching(index + 1) - (index + 1))};
 			if (temp.literal) {
-				text_segment_.back().append(temp.contenido[0]);
+				buffer.back().append(temp.contenido[0]);
 			} else {
-				WriteBuffer(temp.contenido, true);
+				WriteBuffer(temp.contenido, write_buffer_e::ANS);
 			}
 			/// saltar los tokens analizados
-			i = NextPuntoYComa(i);
+			index = NextPuntoYComa(index);
 		}
-	} else if (tokens_[i + 1].first == token_t::OPERATOR) {
-		if (static_cast<operator_e>(tokens_[i + 1].second) == operator_e::ASIGNACION) {
-			const auto&& temp{EvaluadorExpresiones(i + 2, NextPuntoYComa(i + 2) - (i + 2))};
+	} else if (tokens_[index + 1].first == token_t::OPERATOR) {
+		if (static_cast<operator_e>(tokens_[index + 1].second) == operator_e::ASIGNACION) {
+			const auto&& temp{EvaluadorExpresiones(index + 2, NextPuntoYComa(index + 2) - (index + 2))};
 			if (temp.literal) {
-				text_segment_.back().append(temp.contenido[0]);
+				buffer.back().append(temp.contenido[0]);
 			} else {
-				WriteBuffer(temp.contenido, true);
+				WriteBuffer(temp.contenido, write_buffer_e::ANS);
 			}
-			i = NextPuntoYComa(i);
+			index = NextPuntoYComa(index);
 		} else {
 			throw std::runtime_error{"error de sintaxis"};
 		}
@@ -242,28 +260,27 @@ void Compilador::var_init(archivo_t& segment, int& i) {
  * @brief Genera el código fuente
  */
 void Compilador::Generar() {
-	std::string func_name;
-	int end_loop{0};
-	int local_for_n_bucle{0};
 	for (int i{0}; i < tokens_.size(); i++) {
 		auto token = tokens_[i].first;
 		if (token == token_t::IDENTIFIER) {
-			if (func_name.empty()) {
+			if (current_func.identificador.empty()) {
 				assert(tokens_[i - 1].first == token_t::TYPE);
 				/// Es una definición de función (o declaración)
 				if (tokens_[i + 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::PARENTESIS_A) {
+					/// actualizamos el alcance
+					current_func.identificador = identificadores_.front();
+					identificadores_.pop();
+					/// analizamos los argumentos
+
+					/// ponemos la funcion en la tabla de funciones
+					funciones_.push_back(current_func);
 					/// Escribimos la entrada de subrutina
 					text_segment_.push_back(identificadores_.front() + ':');
-					/// actualizamos el alcance
-					func_name = identificadores_.front();
-					identificadores_.pop();
 					/// entrada de función marco de pila...
-					if (func_name != "main") {
+					if (current_func.identificador != "main") {
 						text_segment_.push_back("move $fp,$sp");
 						text_segment_.push_back("addi $sp,$sp,-4");
 						text_segment_.push_back("sw $ra,0($sp)");
-					} else {
-						/// skip main argrs
 					}
 				}
 				/// es una variable global
@@ -285,12 +302,12 @@ void Compilador::Generar() {
 					}
 					var_init(data_segment_, i); /// solo dios sabe si esto funciona
 				}
-			} else {
+			} else { /// convertir esto en una función
 				/// es una declaración de variable local
-				variables_t&& temp{static_cast<tipos_e>(tokens_[i - 1].second), identificadores_.front(), EncontrarRegistroLibre(registros_salvados_)};
+				variables_t&& temp{identificadores_.front(), static_cast<tipos_e>(tokens_[i - 1].second), EncontrarRegistroLibre(current_func.registros_salvados_)};
 				variables_.push_back(temp);
 				identificadores_.pop();
-				registros_salvados_.at(variables_.back().registro) = true; ///¿Poner los registros salvados únicos para cada función?
+				current_func.registros_salvados_.at(variables_.back().registro) = true;
 				/// lo ponemos
 				text_segment_.push_back("li ");
 				text_segment_.back().append(variables_.back().registro);
@@ -302,52 +319,45 @@ void Compilador::Generar() {
 			auto tipo{static_cast<keyword_e>(tokens_[i].second)};
 			if (tipo == keyword_e::WHILE) {
 				assert(tokens_[i + 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::PARENTESIS_A);
-				text_segment_.push_back(func_name + "_while" + std::to_string(bucle_while_count_++) + ':');
+				text_segment_.push_back(current_func.identificador + "_while" + std::to_string(current_func.bucle_while_count_++) + ':');
 				const auto&& temp{EvaluadorBool(i + 2, NextMatching(i + 1) - (i + 2))};
 				if (temp.literal) throw std::runtime_error{"desgraciado, has escrito un bucle infinito"};
-				WriteBuffer(temp.contenido, false);
-				/// establecer flag y analizar token '}'
+				WriteBuffer(temp.contenido, write_buffer_e::END);
 				archivo_t buffer;
-				buffer.push_back("b " + func_name + "_while" + std::to_string(bucle_while_count_ - 1));
-				buffer.push_back(func_name + "_while" + std::to_string(bucle_while_count_ - 1) + '_');
+				buffer.push_back("b " + current_func.identificador + "_while" + std::to_string(current_func.bucle_while_count_ - 1));
+				buffer.push_back(current_func.identificador + "_while" + std::to_string(current_func.bucle_while_count_ - 1) + '_');
 				cerrar_bucles_.push(buffer);
-				end_loop++;
 			} else if (tipo == keyword_e::FOR) {
 				assert(tokens_[i + 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::PARENTESIS_A);
 				int n_tokens{0};
-				while (!(tokens_[i + 2 + n_tokens].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i + 2 + n_tokens].second) == symbol_e::PUNTOYCOMA)) {
-					n_tokens++;
-				}
+				n_tokens = NextPuntoYComa(i + 2) - (i + 2);
 				/// inicializar el iterador
-				WriteBuffer(EvaluadorExpresiones(i + 2, n_tokens).contenido, false);
+				WriteBuffer(EvaluadorExpresiones(i + 2, n_tokens).contenido, write_buffer_e::END);
 				/// escribir la etiqueta
-				text_segment_.push_back(func_name + "_for" + std::to_string(local_for_n_bucle));
+				text_segment_.push_back(current_func.identificador + "_for" + std::to_string(current_func.bucle_for_count_));
 				/// escribir la condición
-				// WriteBuffer(EvaluadorBool());
+				// WriteBuffer(EvaluadorBool().contenido, write_buffer_e::END);
 				/// poner lo de cerrar el bucle en la pila de cerrar bucles
-				end_loop++;
 			} else if (tipo == keyword_e::RETURN) {
 				/// evaluar la expresión y hacer branch
 			}
 		} else if (token == token_t::SYMBOL) {
 			/// suponemos que todas las demás llaves que no sean de funciones las hemos saltado
 			if (static_cast<symbol_e>(tokens_[i].second) == symbol_e::LLAVE_C) {
-				if (end_loop > 0) {
-					WriteBuffer(cerrar_bucles_.top());
+				if (!cerrar_bucles_.empty()) {
+					WriteBuffer(cerrar_bucles_.top(), write_buffer_e::END);
 					cerrar_bucles_.pop();
-					end_loop--;
 				} else {
-					if (func_name != "main") {
-						text_segment_.push_back(func_name + "_return:");
+					if (current_func.identificador != "main") {
+						text_segment_.push_back(current_func.identificador + "_return:");
 						text_segment_.push_back("lw $ra,0($sp)");
 						text_segment_.push_back("move $sp,$fp");
 						text_segment_.push_back("jr $ra");
-						func_name.clear();
 					} else {
 						text_segment_.push_back("li $v0,10");
 						text_segment_.push_back("syscall");
-						func_name.clear();
 					}
+					current_func.identificador.clear();
 				}
 			}
 		} else {

@@ -33,6 +33,7 @@ enum class directivas_e {
 
 enum class tipos_e {
 	VOID,
+	BOOL,
 	CHAR,
 	INT,
 	FLOAT,

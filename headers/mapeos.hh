@@ -65,6 +65,7 @@ const std::map<char, symbol_e> m_symbol{
 const std::map<std::string, tipos_e>
 		m_tipos{
 				{"void", tipos_e::VOID},
+				{"bool", tipos_e::BOOL},
 				{"char", tipos_e::CHAR},
 				{"int", tipos_e::INT},
 				{"float", tipos_e::FLOAT},
