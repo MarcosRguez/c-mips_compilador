@@ -82,6 +82,7 @@ class Compilador {
 	void DeclararVar(archivo_t& buffer, int& index);
 	void var_init(archivo_t& segment, int&);
 	bool FindVarTable(const std::string&);
+	bool FindFuncTable(const std::string&);
 	std::string EncontrarRegistroLibre(
 			const registros_t&) const;
 	int NextMatching(int);

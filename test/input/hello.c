@@ -1,6 +1,6 @@
+int java() {}
+
 int main() {
-	bool alfa = true;
-	if (alfa) {
-	}
+	java();
 	return 0;
 }

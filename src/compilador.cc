@@ -99,6 +99,17 @@ bool Compilador::FindVarTable(const std::string& nombre) {
 	return existe;
 }
 
+bool Compilador::FindFuncTable(const std::string& nombre) {
+	bool existe{false};
+	for (const auto& i : funciones_) {
+		if (i.identificador == nombre) {
+			existe = true;
+			break;
+		}
+	}
+	return existe;
+}
+
 Eval_f_t Compilador::EvaluadorBool(int index, int n_tokens) {
 	Eval_f_t resultado;
 	if (n_tokens == 0) return resultado;
@@ -324,8 +335,17 @@ void Compilador::Generar() {
 					var_init(data_segment_, i); /// solo dios sabe si esto funciona
 				}
 			} else { /// convertir esto en una función
-				/// es una declaración de variable local
-				DeclararVar(text_segment_, i);
+				/// es una llamada a función
+				if (tokens_[i - 1].first != token_t::TYPE && (tokens_[i + 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::PARENTESIS_A)) {
+					if (!FindFuncTable(identificadores_.front())) {
+						throw std::runtime_error{"declaración implícita de función"};
+					}
+					text_segment_.push_back("jal " + identificadores_.front());
+					identificadores_.pop();
+				} else {
+					/// es una declaración de variable local (o una llamada a función)
+					DeclararVar(text_segment_, i);
+				}
 			}
 		} else if (token == token_t::KEYWORD) {
 			auto tipo{static_cast<keyword_e>(tokens_[i].second)};
@@ -378,7 +398,7 @@ void Compilador::Generar() {
 						text_segment_.push_back("li $v0,10");
 						text_segment_.push_back("syscall");
 					}
-					current_func.identificador.clear();
+					current_func.identificador.clear(); /// Creo que aquí hay que borrar más cosas
 				}
 			}
 		} else {
