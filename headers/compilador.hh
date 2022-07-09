@@ -79,6 +79,7 @@ class Compilador {
 	Eval_f_t EvaluadorExpresiones(int, int);
 	Eval_f_t EvaluadorBool(int, int);
 
+	void DeclararVar(archivo_t& buffer, int& index);
 	void var_init(archivo_t& segment, int&);
 	bool FindVarTable(const std::string&);
 	std::string EncontrarRegistroLibre(
