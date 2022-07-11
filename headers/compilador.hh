@@ -71,6 +71,7 @@ class Compilador {
 	std::queue<std::string> str_literales_{};
 	std::stack<archivo_t> cerrar_bucles_{};
 	std::vector<funciones_t> funciones_{}; /// Tabla de funciones
+	/// crear tabla variables globales
 	funciones_t current_func{};
 	/// Métodos
 
