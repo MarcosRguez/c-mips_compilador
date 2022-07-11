@@ -54,6 +54,7 @@ enum class keyword_e {
 };
 
 enum class symbol_e {
+	COMA,
 	PARENTESIS_A,
 	PARENTESIS_C,
 	CORCHETE_A,

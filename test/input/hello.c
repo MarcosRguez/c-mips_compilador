@@ -1,6 +1,6 @@
-int java() {}
+int java(int a) {}
 
 int main() {
-	java();
+	java(5);
 	return 0;
 }

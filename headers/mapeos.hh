@@ -53,6 +53,7 @@ const std::map<std::string, operator_e> m_operator{
 };
 
 const std::map<char, symbol_e> m_symbol{
+		{',', symbol_e::COMA},
 		{'#', symbol_e::ALMOHADILLA},
 		{'(', symbol_e::PARENTESIS_A},
 		{')', symbol_e::PARENTESIS_C},

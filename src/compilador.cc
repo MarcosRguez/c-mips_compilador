@@ -303,7 +303,6 @@ void Compilador::Generar() {
 					current_func.identificador = identificadores_.front();
 					identificadores_.pop();
 					/// analizamos los argumentos 🤒🦍
-
 					/// ponemos la funcion en la tabla de funciones
 					funciones_.push_back(current_func);
 					/// Escribimos la entrada de subrutina
@@ -339,6 +338,19 @@ void Compilador::Generar() {
 				if (tokens_[i - 1].first != token_t::TYPE && (tokens_[i + 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::PARENTESIS_A)) {
 					if (!FindFuncTable(identificadores_.front())) {
 						throw std::runtime_error{"declaración implícita de función"};
+					}
+					int index{i + 2};
+					while (!(tokens_[index].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[index].second) == symbol_e::PARENTESIS_C)) {
+						int n_tokens{0};
+						int temp{index};
+						int n_parameter{0};
+						while (!((tokens_[temp].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[temp].second) == symbol_e::PARENTESIS_C) || (tokens_[temp].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[temp].second) == symbol_e::COMA))) {
+							n_tokens++;
+							temp++;
+						}
+						text_segment_.push_back("li $a" + n_parameter++);
+						text_segment_.back().append(EvaluadorExpresiones(index, n_tokens).contenido[0]);
+						index += n_tokens;
 					}
 					text_segment_.push_back("jal " + identificadores_.front());
 					identificadores_.pop();
