@@ -10,7 +10,7 @@ lw $ra,0($sp)
 move $sp,$fp
 jr $ra
 main:
-li $a5
+li $a0,5
 jal java
 li $v0,10
 syscall

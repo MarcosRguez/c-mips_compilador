@@ -58,12 +58,11 @@ Eval_f_t Compilador::EvaluadorExpresiones(const int index, const int n_tokens) {
 	/// caso base: identificador
 	Eval_f_t resultado;
 	if (n_tokens == 0) return resultado;
-	bool declaracion{false};
-	for (int i{index}; i < index + n_tokens; i++) {
-		if (tokens_[i].first == token_t::LITERAL) {
-			/// Devolver el literal
-			resultado.literal = true;
-			switch (static_cast<literal_e>(tokens_[i].second)) {
+	if (n_tokens == 1) {
+		assert(tokens_[index].first == token_t::LITERAL || tokens_[index].first == token_t::IDENTIFIER);
+		resultado.literal = true;
+		if (tokens_[index].first == token_t::LITERAL) {
+			switch (static_cast<literal_e>(tokens_[index].second)) {
 				case (literal_e::INT):
 					resultado.contenido.push_back(std::to_string(int_literales_.front()));
 					int_literales_.pop();
@@ -76,14 +75,22 @@ Eval_f_t Compilador::EvaluadorExpresiones(const int index, const int n_tokens) {
 					throw std::runtime_error{"literal desconocido"};
 					break;
 			}
-		} else if (tokens_[i].first == token_t::TYPE) {
-			declaracion = true;
-		} else if (tokens_[i].first == token_t::IDENTIFIER) {
-			/// comprobamos si es una declaración
-			if (declaracion && !FindVarTable(identificadores_.front())) {
-				DeclararVar(resultado.contenido, i);
+		} else if (tokens_[index].first == token_t::IDENTIFIER) {
+			if (!FindVarTable(identificadores_.front())) {
+				throw std::runtime_error{"variable no declarada"};
 			}
+			for (const auto& i : variables_) {
+				if (i.identificador == identificadores_.front()) {
+					resultado.contenido.push_back(i.registro);
+					return resultado;
+				}
+			}
+		} else {
+			throw std::runtime_error{"en fin, la hipocresìa."};
 		}
+	}
+	bool declaracion{false};
+	for (int i{index}; i < index + n_tokens; i++) {
 	}
 	return resultado;
 }
@@ -348,8 +355,14 @@ void Compilador::Generar() {
 							n_tokens++;
 							temp++;
 						}
-						text_segment_.push_back("li $a" + n_parameter++);
-						text_segment_.back().append(EvaluadorExpresiones(index, n_tokens).contenido[0]);
+						const auto&& eval{EvaluadorExpresiones(index, n_tokens)};
+						if (eval.literal) {
+							text_segment_.push_back("li $a" + std::to_string(n_parameter++) + ',');
+							text_segment_.back().append(eval.contenido[0]);
+						} else {
+							WriteBuffer(eval.contenido, write_buffer_e::END);
+							text_segment_.push_back("move $a" + std::to_string(n_parameter++) + ',' + "$t0");
+						}
 						index += n_tokens;
 					}
 					text_segment_.push_back("jal " + identificadores_.front());
