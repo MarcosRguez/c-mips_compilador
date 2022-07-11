@@ -253,13 +253,14 @@ int Compilador::NextPuntoYComa(int index) {
  * @param index	el índice del identificador
  */
 void Compilador::var_init(archivo_t& buffer, int& index) {
+	assert(tokens_[index].first == token_t::IDENTIFIER);
 	if (tokens_[index + 1].first == token_t::SYMBOL) {
 		if (static_cast<symbol_e>(tokens_[index + 1].second) == symbol_e::PUNTOYCOMA) {
 			/// no está init
 			buffer.back().push_back('0');
 		} else if (static_cast<symbol_e>(tokens_[index + 1].second) == symbol_e::LLAVE_A) {
 			/// evaluar la expresión entre los corchetes
-			const auto&& temp{EvaluadorExpresiones(index + 2, NextMatching(index + 1) - (index + 1))};
+			const auto&& temp{EvaluadorExpresiones(index + 2, NextMatching(index + 1) - (index + 1) - 1)};
 			if (temp.literal) {
 				buffer.back().append(temp.contenido[0]);
 			} else {
@@ -338,19 +339,19 @@ void Compilador::Generar() {
 					}
 				}
 				/// es una variable global
-				else if (tokens_[i + 1].first == token_t::OPERATOR && static_cast<operator_e>(tokens_[i + 1].second) == operator_e::ASIGNACION) {
+				else if ((tokens_[i + 1].first == token_t::OPERATOR && static_cast<operator_e>(tokens_[i + 1].second) == operator_e::ASIGNACION) || (tokens_[i + 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::LLAVE_A)) {
 					/// data_Segmetn
 					data_segment_.push_back(identificadores_.front() + ':');
 					identificadores_.pop();
 					const auto& temp{static_cast<tipos_e>(tokens_[i - 1].second)};
 					if (temp == tipos_e::INT) {
-						data_segment_.back().append(".word");
+						data_segment_.back().append(".word	");
 					} else if (temp == tipos_e::FLOAT) {
-						data_segment_.back().append(".float");
+						data_segment_.back().append(".float	");
 					} else if (temp == tipos_e::DOUBLE) {
-						data_segment_.back().append(".double");
+						data_segment_.back().append(".double	");
 					} else if (temp == tipos_e::CHAR) {
-						data_segment_.back().append(".byte");
+						data_segment_.back().append(".byte	");
 					} else {
 						throw std::runtime_error{"tipo de var global no soportado"};
 					}
