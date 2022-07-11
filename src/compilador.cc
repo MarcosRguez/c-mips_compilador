@@ -60,8 +60,8 @@ Eval_f_t Compilador::EvaluadorExpresiones(const int index, const int n_tokens) {
 	if (n_tokens == 0) return resultado;
 	if (n_tokens == 1) {
 		assert(tokens_[index].first == token_t::LITERAL || tokens_[index].first == token_t::IDENTIFIER);
-		resultado.literal = true;
 		if (tokens_[index].first == token_t::LITERAL) {
+			resultado.literal = true;
 			switch (static_cast<literal_e>(tokens_[index].second)) {
 				case (literal_e::INT):
 					resultado.contenido.push_back(std::to_string(int_literales_.front()));
@@ -75,13 +75,16 @@ Eval_f_t Compilador::EvaluadorExpresiones(const int index, const int n_tokens) {
 					throw std::runtime_error{"literal desconocido"};
 					break;
 			}
+			return resultado;
 		} else if (tokens_[index].first == token_t::IDENTIFIER) {
+			resultado.registro = true;
 			if (!FindVarTable(identificadores_.front())) {
 				throw std::runtime_error{"variable no declarada"};
 			}
-			for (const auto& i : variables_) {
+			for (const auto& i : current_func.variables_) {
 				if (i.identificador == identificadores_.front()) {
-					resultado.contenido.push_back(i.registro);
+					resultado.out_reg = i.registro;
+					identificadores_.pop();
 					return resultado;
 				}
 			}
@@ -97,7 +100,7 @@ Eval_f_t Compilador::EvaluadorExpresiones(const int index, const int n_tokens) {
 
 bool Compilador::FindVarTable(const std::string& nombre) {
 	bool existe{false};
-	for (const auto& i : variables_) {
+	for (const auto& i : current_func.variables_) {
 		if (i.identificador == nombre) {
 			existe = true;
 			break;
@@ -284,12 +287,12 @@ void Compilador::var_init(archivo_t& buffer, int& index) {
 
 void Compilador::DeclararVar(archivo_t& buffer, int& index) {
 	variables_t&& temp{identificadores_.front(), static_cast<tipos_e>(tokens_[index - 1].second), EncontrarRegistroLibre(current_func.registros_salvados_)};
-	variables_.push_back(temp);
+	current_func.variables_.push_back(temp);
 	identificadores_.pop();
-	current_func.registros_salvados_.at(variables_.back().registro) = true;
+	current_func.registros_salvados_.at(current_func.variables_.back().registro) = true;
 	/// lo ponemos
 	buffer.push_back("li ");
-	buffer.back().append(variables_.back().registro);
+	buffer.back().append(current_func.variables_.back().registro);
 	buffer.back().append(",");
 	/// comprobamos si está inizializado
 	var_init(buffer, index);
@@ -340,7 +343,7 @@ void Compilador::Generar() {
 					}
 					var_init(data_segment_, i); /// solo dios sabe si esto funciona
 				}
-			} else { /// convertir esto en una función
+			} else {
 				/// es una llamada a función
 				if (tokens_[i - 1].first != token_t::TYPE && (tokens_[i + 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::PARENTESIS_A)) {
 					if (!FindFuncTable(identificadores_.front())) {
@@ -359,6 +362,9 @@ void Compilador::Generar() {
 						if (eval.literal) {
 							text_segment_.push_back("li $a" + std::to_string(n_parameter++) + ',');
 							text_segment_.back().append(eval.contenido[0]);
+						} else if (eval.registro) {
+							text_segment_.push_back("move $a" + std::to_string(n_parameter++) + ',');
+							text_segment_.back().append(eval.out_reg);
 						} else {
 							WriteBuffer(eval.contenido, write_buffer_e::END);
 							text_segment_.push_back("move $a" + std::to_string(n_parameter++) + ',' + "$t0");
@@ -368,7 +374,7 @@ void Compilador::Generar() {
 					text_segment_.push_back("jal " + identificadores_.front());
 					identificadores_.pop();
 				} else {
-					/// es una declaración de variable local (o una llamada a función)
+					/// es una declaración de variable local
 					DeclararVar(text_segment_, i);
 				}
 			}
@@ -406,6 +412,17 @@ void Compilador::Generar() {
 			} else if (tipo == keyword_e::ELSE) {
 			} else if (tipo == keyword_e::RETURN) {
 				/// evaluar la expresión y hacer branch
+				int n_tokens{NextPuntoYComa(i + 1) - (i + 1)};
+				const auto&& eval{EvaluadorExpresiones(i + 1, n_tokens)};
+				if (eval.literal) {
+					text_segment_.push_back("li $v0," + eval.contenido[0]);
+				} else if (eval.registro) {
+					text_segment_.push_back("move $v0," + eval.out_reg);
+				} else {
+					WriteBuffer(eval.contenido, write_buffer_e::END);
+					text_segment_.push_back("move $v0," + eval.out_reg);
+				}
+				text_segment_.push_back("b " + current_func.identificador + '_');
 			}
 		} else if (token == token_t::SYMBOL) {
 			/// suponemos que todas las demás llaves que no sean de funciones las hemos saltado
@@ -415,11 +432,12 @@ void Compilador::Generar() {
 					cerrar_bucles_.pop();
 				} else {
 					if (current_func.identificador != "main") {
-						text_segment_.push_back(current_func.identificador + "_return:");
+						text_segment_.push_back(current_func.identificador + "_:");
 						text_segment_.push_back("lw $ra,0($sp)");
 						text_segment_.push_back("move $sp,$fp");
 						text_segment_.push_back("jr $ra");
 					} else {
+						text_segment_.push_back("main_:");
 						text_segment_.push_back("li $v0,10");
 						text_segment_.push_back("syscall");
 					}
