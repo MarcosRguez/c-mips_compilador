@@ -299,7 +299,8 @@ void Compilador::DeclararVar(archivo_t& buffer, int& index) {
 }
 
 /**
- * @brief Genera el código fuente
+ * @brief Genera el código fuente,
+ * recorre los tokens previamente generados y hace cosas según lo que se encuentra
  */
 void Compilador::Generar() {
 	for (int i{0}; i < tokens_.size(); i++) {
@@ -313,6 +314,18 @@ void Compilador::Generar() {
 					current_func.identificador = identificadores_.front();
 					identificadores_.pop();
 					/// analizamos los argumentos 🤒🦍
+					int index{i + 2};
+					int n_params{0};
+					while (!(tokens_[index].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[index].second) == symbol_e::PARENTESIS_C)) {
+						if (tokens_[index].first == token_t::IDENTIFIER) {
+							assert(tokens_[index - 1].first == token_t::TYPE);
+							assert(tokens_[index + 1].first == token_t::SYMBOL && (static_cast<symbol_e>(tokens_[index + 1].second) == symbol_e::COMA || static_cast<symbol_e>(tokens_[index + 1].second) == symbol_e::PARENTESIS_C));
+							current_func.variables_.push_back({identificadores_.front(), static_cast<tipos_e>(tokens_[index - 1].second), "$a" + std::to_string(n_params++)});
+							identificadores_.pop();
+						}
+						index++;
+					}
+					i = ++index;
 					/// ponemos la funcion en la tabla de funciones
 					funciones_.push_back(current_func);
 					/// Escribimos la entrada de subrutina
@@ -350,11 +363,14 @@ void Compilador::Generar() {
 						throw std::runtime_error{"declaración implícita de función"};
 					}
 					int index{i + 2};
+					int n_parameter{0};
 					while (!(tokens_[index].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[index].second) == symbol_e::PARENTESIS_C)) {
+						if (tokens_[index].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[index].second) == symbol_e::COMA) {
+							index++;
+						}
 						int n_tokens{0};
 						int temp{index};
-						int n_parameter{0};
-						while (!((tokens_[temp].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[temp].second) == symbol_e::PARENTESIS_C) || (tokens_[temp].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[temp].second) == symbol_e::COMA))) {
+						while (!(tokens_[temp].first == token_t::SYMBOL && (static_cast<symbol_e>(tokens_[temp].second) == symbol_e::PARENTESIS_C || static_cast<symbol_e>(tokens_[temp].second) == symbol_e::COMA))) {
 							n_tokens++;
 							temp++;
 						}
@@ -392,10 +408,8 @@ void Compilador::Generar() {
 				cerrar_bucles_.push(buffer);
 			} else if (tipo == keyword_e::FOR) {
 				assert(tokens_[i + 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::PARENTESIS_A);
-				int index{0};
-				int n_tokens{0};
-				index = i + 2;
-				n_tokens = NextPuntoYComa(index) - index;
+				int index{i + 2};
+				int n_tokens{NextPuntoYComa(index) - index};
 				/// inicializar el iterador
 				WriteBuffer(EvaluadorExpresiones(index, n_tokens).contenido, write_buffer_e::END);
 				/// escribir la etiqueta
@@ -423,6 +437,7 @@ void Compilador::Generar() {
 					text_segment_.push_back("move $v0," + eval.out_reg);
 				}
 				text_segment_.push_back("b " + current_func.identificador + '_');
+				i += n_tokens;
 			}
 		} else if (token == token_t::SYMBOL) {
 			/// suponemos que todas las demás llaves que no sean de funciones las hemos saltado
