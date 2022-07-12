@@ -94,7 +94,7 @@ Eval_f_t Compilador::EvaluadorExpresiones(const int index, const int n_tokens) {
 	}
 	bool declaracion{false};
 	for (int i{index}; i < index + n_tokens; i++) {
-	}
+		}
 	return resultado;
 }
 

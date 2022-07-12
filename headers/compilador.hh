@@ -21,6 +21,8 @@
 
 using registros_t = std::map<std::string, bool>;
 
+int Precedencia(const operator_e op);
+
 struct variables_t {
 	std::string identificador;
 	tipos_e tipo;

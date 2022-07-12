@@ -6,6 +6,6 @@ int jota{8};
 int joto = 87;
 
 int main() {
-	int batman{java(1, 2, 3)};
+	int a = 5 + 3;
 	return 0;
 }
