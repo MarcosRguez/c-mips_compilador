@@ -52,4 +52,5 @@ std::string GetInstruction(const operator_e op) {
 		default:
 			break;
 	}
+	return "";
 }

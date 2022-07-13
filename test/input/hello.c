@@ -1,4 +1,5 @@
 int main() {
-	int a = 5 + 3;
+	int basta{6};
+	int a = basta + 3;
 	return 0;
 }

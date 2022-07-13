@@ -1,10 +1,10 @@
 .data
 .text
 main:
-li $t0,5
-li $t1,3
-add $t2,$t0,$t1
-move $s0,$t2
+li $s0,6
+li $t0,3
+add $t1,$s0,$t0
+move $s1,$t1
 li $v0,0
 b main_
 main_:

@@ -170,10 +170,14 @@ EvalExpr_t Compilador::EvaluadorExpresiones(const int index, const int n_tokens)
 		resultado.out_reg = EncontrarRegistroLibre(current_func.registros_temporales_);
 		resultado.contenido.push_back(GetInstruction(static_cast<operator_e>(tokens_[op_index].second)) + ' ' + resultado.out_reg + ',' + operando1.out_reg + ',' + operando2.out_reg);
 		/// liberamos los registros temporales
-		current_func.registros_temporales_.at(operando1.out_reg) = false;
-		current_func.registros_temporales_.at(operando2.out_reg) = false;
+		ClearRegs(current_func.registros_temporales_);
 	}
 	return resultado;
+}
+void Compilador::ClearRegs(registros_t& regs) {
+	for (auto& i : regs) {
+		i.second = false;
+	}
 }
 
 int Compilador::InxOperador(const int index, const int n_tokens) {

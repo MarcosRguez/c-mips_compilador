@@ -50,6 +50,7 @@ class Compilador {
 	EvalExpr_t EvaluadorBool(int, int);
 
 	int InxOperador(const int index, const int n_tokens);
+	void ClearRegs(registros_t& regs);
 	int FuncCall(int);
 	void DeclararVar(archivo_t& buffer, int& index);
 	EvalExpr_t VarInit(const int);
