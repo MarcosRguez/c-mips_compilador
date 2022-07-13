@@ -26,3 +26,11 @@ int Precedencia(const operator_e op) {
 		throw std::runtime_error{"operador sin precedencia conocida."};
 	}
 }
+
+int Aridad(const operator_e op) {
+	if (op == operator_e::NOT || op == operator_e::INCREMENTO || op == operator_e::DECREMENTO || op == operator_e::PUNTERO || op == operator_e::REFERENCIA) {
+		return 1;
+	} else {
+		return 2;
+	}
+}

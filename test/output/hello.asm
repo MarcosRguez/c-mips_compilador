@@ -13,8 +13,12 @@ lw $ra,0($sp)
 move $sp,$fp
 jr $ra
 main:
+li $a0,1
+li $a1,2
+li $a2,3
+jal java
 li $s0,
-li $v0,1
+li $v0,5
 b main_
 main_:
 li $v0,10

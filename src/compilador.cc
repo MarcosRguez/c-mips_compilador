@@ -56,6 +56,7 @@ std::string Compilador::Compilar() {
 Eval_f_t Compilador::EvaluadorExpresiones(const int index, const int n_tokens) {
 	/// caso base: literal
 	/// caso base: identificador
+	/// caso base: funccall
 	Eval_f_t resultado;
 	if (n_tokens == 0) return resultado;
 	if (n_tokens == 1) {
@@ -92,9 +93,44 @@ Eval_f_t Compilador::EvaluadorExpresiones(const int index, const int n_tokens) {
 			throw std::runtime_error{"en fin, la hipocresìa."};
 		}
 	}
-	bool declaracion{false};
+	/// expresión compuesta
+	/// comprobr si el un funccall
+	if (tokens_[index].first == token_t::IDENTIFIER && (tokens_[index + 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[index + 1].second) == symbol_e::PARENTESIS_A)) {
+		assert(tokens_[n_tokens - 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[n_tokens - 1].second) == symbol_e::PARENTESIS_C);
+		FuncCall(index);
+	}
+	/// hacemos una copia
+	std::vector<std::pair<token_t, unsigned>> copia;
 	for (int i{index}; i < index + n_tokens; i++) {
+		copia.push_back(tokens_[i]);
+	}
+	/// encontramos el operador con más precedencia
+	int op_index{InxOperador(index, n_tokens)};
+	/// si el operador en cuestión es de ariedad 2
+	if (Aridad(static_cast<operator_e>(tokens_[op_index].second)) == 2) {
+		/// evaluamos lo primero y sustituimos el primer operando por el outreg
+		/// write buffer
+		/// evaluamos los segundo y sustituimos el primer operando por el outreg
+		/// write buffer
+		/// operamos el operando y sustituimos la operación por el outreg
+		/// write buffer
+		/// liberamos los registros temporales
+	}
+	return resultado;
+}
+
+int Compilador::InxOperador(const int index, const int n_tokens) {
+	int resultado{-1};
+	int precedencia{INT16_MAX};
+	for (int i{index}; i < index + n_tokens; i++) {
+		if (tokens_[i].first == token_t::OPERATOR) {
+			if (Precedencia(static_cast<operator_e>(tokens_[i].second)) < precedencia) {
+				resultado = i;
+			}
+		} else if (tokens_[i].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i].second) == symbol_e::PARENTESIS_A) {
+			i = NextMatching(i);
 		}
+	}
 	return resultado;
 }
 
@@ -299,6 +335,40 @@ void Compilador::DeclararVar(archivo_t& buffer, int& index) {
 	var_init(buffer, index);
 }
 
+int Compilador::FuncCall(int index) {
+	if (!FindFuncTable(identificadores_.front())) {
+		throw std::runtime_error{"declaración implícita de función"};
+	}
+	index += 2;
+	int n_parameter{0};
+	while (!(tokens_[index].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[index].second) == symbol_e::PARENTESIS_C)) {
+		if (tokens_[index].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[index].second) == symbol_e::COMA) {
+			index++;
+		}
+		int n_tokens{0};
+		int temp{index};
+		while (!(tokens_[temp].first == token_t::SYMBOL && (static_cast<symbol_e>(tokens_[temp].second) == symbol_e::PARENTESIS_C || static_cast<symbol_e>(tokens_[temp].second) == symbol_e::COMA))) {
+			n_tokens++;
+			temp++;
+		}
+		const auto&& eval{EvaluadorExpresiones(index, n_tokens)};
+		if (eval.literal) {
+			text_segment_.push_back("li $a" + std::to_string(n_parameter++) + ',');
+			text_segment_.back().append(eval.contenido[0]);
+		} else if (eval.registro) {
+			text_segment_.push_back("move $a" + std::to_string(n_parameter++) + ',');
+			text_segment_.back().append(eval.out_reg);
+		} else {
+			WriteBuffer(eval.contenido, write_buffer_e::END);
+			text_segment_.push_back("move $a" + std::to_string(n_parameter++) + ',' + "$t0");
+		}
+		index += n_tokens;
+	}
+	text_segment_.push_back("jal " + identificadores_.front());
+	identificadores_.pop();
+	return index;
+}
+
 /**
  * @brief Genera el código fuente,
  * recorre los tokens previamente generados y hace cosas según lo que se encuentra
@@ -340,56 +410,34 @@ void Compilador::Generar() {
 				}
 				/// es una variable global
 				else if ((tokens_[i + 1].first == token_t::OPERATOR && static_cast<operator_e>(tokens_[i + 1].second) == operator_e::ASIGNACION) || (tokens_[i + 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::LLAVE_A)) {
+					variables_t var;
 					/// data_Segmetn
 					data_segment_.push_back(identificadores_.front() + ':');
+					var.identificador = identificadores_.front();
 					identificadores_.pop();
 					const auto& temp{static_cast<tipos_e>(tokens_[i - 1].second)};
 					if (temp == tipos_e::INT) {
+						var.tipo = tipos_e::INT;
 						data_segment_.back().append(".word	");
 					} else if (temp == tipos_e::FLOAT) {
+						var.tipo = tipos_e::FLOAT;
 						data_segment_.back().append(".float	");
 					} else if (temp == tipos_e::DOUBLE) {
+						var.tipo = tipos_e::DOUBLE;
 						data_segment_.back().append(".double	");
 					} else if (temp == tipos_e::CHAR) {
+						var.tipo = tipos_e::CHAR;
 						data_segment_.back().append(".byte	");
 					} else {
 						throw std::runtime_error{"tipo de var global no soportado"};
 					}
+					globl_vars_.push_back(var);
 					var_init(data_segment_, i); /// solo dios sabe si esto funciona
 				}
 			} else {
 				/// es una llamada a función
 				if (tokens_[i - 1].first != token_t::TYPE && (tokens_[i + 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::PARENTESIS_A)) {
-					if (!FindFuncTable(identificadores_.front())) {
-						throw std::runtime_error{"declaración implícita de función"};
-					}
-					int index{i + 2};
-					int n_parameter{0};
-					while (!(tokens_[index].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[index].second) == symbol_e::PARENTESIS_C)) {
-						if (tokens_[index].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[index].second) == symbol_e::COMA) {
-							index++;
-						}
-						int n_tokens{0};
-						int temp{index};
-						while (!(tokens_[temp].first == token_t::SYMBOL && (static_cast<symbol_e>(tokens_[temp].second) == symbol_e::PARENTESIS_C || static_cast<symbol_e>(tokens_[temp].second) == symbol_e::COMA))) {
-							n_tokens++;
-							temp++;
-						}
-						const auto&& eval{EvaluadorExpresiones(index, n_tokens)};
-						if (eval.literal) {
-							text_segment_.push_back("li $a" + std::to_string(n_parameter++) + ',');
-							text_segment_.back().append(eval.contenido[0]);
-						} else if (eval.registro) {
-							text_segment_.push_back("move $a" + std::to_string(n_parameter++) + ',');
-							text_segment_.back().append(eval.out_reg);
-						} else {
-							WriteBuffer(eval.contenido, write_buffer_e::END);
-							text_segment_.push_back("move $a" + std::to_string(n_parameter++) + ',' + "$t0");
-						}
-						index += n_tokens;
-					}
-					text_segment_.push_back("jal " + identificadores_.front());
-					identificadores_.pop();
+					i = FuncCall(i);
 				} else {
 					/// es una declaración de variable local
 					DeclararVar(text_segment_, i);
