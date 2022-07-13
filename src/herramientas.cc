@@ -34,3 +34,22 @@ int Aridad(const operator_e op) {
 		return 2;
 	}
 }
+
+std::string GetInstruction(const operator_e op) {
+	switch (op) {
+		case (operator_e::SUMA):
+			return "add";
+			break;
+		case (operator_e::RESTA):
+			return "sub";
+			break;
+		case (operator_e::PRODUCTO):
+			return "mul";
+			break;
+		case (operator_e::DIVISION):
+			return "div";
+			break;
+		default:
+			break;
+	}
+}

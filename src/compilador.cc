@@ -53,16 +53,16 @@ std::string Compilador::Compilar() {
 	return LineaUnica(resultado);
 }
 
-Eval_f_t Compilador::EvaluadorExpresiones(const int index, const int n_tokens) {
+EvalExpr_t Compilador::EvaluadorExpresiones(const int index, const int n_tokens) {
 	/// caso base: literal
 	/// caso base: identificador
 	/// caso base: funccall
-	Eval_f_t resultado;
+	EvalExpr_t resultado;
 	if (n_tokens == 0) return resultado;
 	if (n_tokens == 1) {
 		assert(tokens_[index].first == token_t::LITERAL || tokens_[index].first == token_t::IDENTIFIER);
 		if (tokens_[index].first == token_t::LITERAL) {
-			resultado.literal = true;
+			resultado.is_literal = true;
 			switch (static_cast<literal_e>(tokens_[index].second)) {
 				case (literal_e::INT):
 					resultado.contenido.push_back(std::to_string(int_literales_.front()));
@@ -78,7 +78,7 @@ Eval_f_t Compilador::EvaluadorExpresiones(const int index, const int n_tokens) {
 			}
 			return resultado;
 		} else if (tokens_[index].first == token_t::IDENTIFIER) {
-			resultado.registro = true;
+			resultado.is_register = true;
 			if (!FindVarTable(identificadores_.front())) {
 				throw std::runtime_error{"variable no declarada"};
 			}
@@ -94,27 +94,84 @@ Eval_f_t Compilador::EvaluadorExpresiones(const int index, const int n_tokens) {
 		}
 	}
 	/// expresión compuesta
-	/// comprobr si el un funccall
+	/// comprobar si el un funccall
 	if (tokens_[index].first == token_t::IDENTIFIER && (tokens_[index + 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[index + 1].second) == symbol_e::PARENTESIS_A)) {
-		assert(tokens_[n_tokens - 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[n_tokens - 1].second) == symbol_e::PARENTESIS_C);
-		FuncCall(index);
+		if (NextMatching(index + 1) == index + n_tokens - 1) {
+			FuncCall(index);
+			resultado.is_register = true;
+			resultado.out_reg = "$v0";
+			return resultado;
+		}
 	}
-	/// hacemos una copia
-	std::vector<std::pair<token_t, unsigned>> copia;
-	for (int i{index}; i < index + n_tokens; i++) {
-		copia.push_back(tokens_[i]);
-	}
+	// /// hacemos una copia
+	// std::vector<std::pair<token_t, unsigned>> copia;
+	// for (int i{index}; i < index + n_tokens; i++) {
+	// 	copia.push_back(tokens_[i]);
+	// }
 	/// encontramos el operador con más precedencia
 	int op_index{InxOperador(index, n_tokens)};
 	/// si el operador en cuestión es de ariedad 2
 	if (Aridad(static_cast<operator_e>(tokens_[op_index].second)) == 2) {
 		/// evaluamos lo primero y sustituimos el primer operando por el outreg
+		EvalExpr_t operando1;
+		/// comprobamos si la expr está entre paréntesis
+		if (tokens_[op_index - 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[op_index - 1].second) == symbol_e::PARENTESIS_C) {
+			/// comprobamos si funca las maracas 🧛‍♂️🧜‍♀️🧶
+			if (tokens_[PrevMatching(op_index - 1) - 1].first == token_t::IDENTIFIER) {
+				operando1 = EvaluadorExpresiones(PrevMatching(op_index - 1) - 1, (op_index - 1) - PrevMatching(op_index - 1) - 1);
+			} else {
+				operando1 = EvaluadorExpresiones(PrevMatching(op_index - 1) + 1, (op_index - 1) - PrevMatching(op_index - 1) + 1);
+			}
+		} else {
+			operando1 = EvaluadorExpresiones(op_index - 1, 1);
+			if (operando1.is_literal) {
+				if (operando1.contenido[0] == "0") {
+					operando1.out_reg = "$zero";
+				} else {
+					operando1.out_reg = EncontrarRegistroLibre(current_func.registros_temporales_);
+					current_func.registros_temporales_.at(operando1.out_reg) = true;
+				}
+				operando1.is_register = true;
+			}
+		}
 		/// write buffer
+		if (operando1.is_literal && operando1.is_register) {
+			resultado.contenido.push_back("li " + operando1.out_reg + ',' + operando1.contenido[0]);
+		} else {
+			WriteBuffer(operando1.contenido);
+		}
 		/// evaluamos los segundo y sustituimos el primer operando por el outreg
+		EvalExpr_t operando2;
+		/// Es una expr entre paréntesis
+		if (tokens_[op_index + 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[op_index + 1].second) == symbol_e::PARENTESIS_A) {
+			operando2 = EvaluadorExpresiones(op_index + 2, NextMatching(op_index + 1) - op_index + 1);
+		} /// Es una funccall
+		else if (tokens_[op_index + 1].first == token_t::IDENTIFIER && (tokens_[op_index + 2].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[op_index + 2].second) == symbol_e::PARENTESIS_A)) {
+			operando2 = EvaluadorExpresiones(op_index + 1, NextMatching(op_index + 2) - op_index + 1);
+		} else {
+			operando2 = EvaluadorExpresiones(op_index + 1, 1);
+			if (operando2.is_literal) {
+				if (operando2.contenido[0] == "0") {
+					operando2.out_reg = "$zero";
+				} else {
+					operando2.out_reg = EncontrarRegistroLibre(current_func.registros_temporales_);
+					current_func.registros_temporales_.at(operando2.out_reg) = true;
+				}
+				operando2.is_register = true;
+			}
+		}
 		/// write buffer
+		if (operando2.is_literal && operando2.is_register) {
+			resultado.contenido.push_back("li " + operando2.out_reg + ',' + operando2.contenido[0]);
+		} else {
+			WriteBuffer(operando2.contenido);
+		}
 		/// operamos el operando y sustituimos la operación por el outreg
-		/// write buffer
+		resultado.out_reg = EncontrarRegistroLibre(current_func.registros_temporales_);
+		resultado.contenido.push_back(GetInstruction(static_cast<operator_e>(tokens_[op_index].second)) + ' ' + resultado.out_reg + ',' + operando1.out_reg + ',' + operando2.out_reg);
 		/// liberamos los registros temporales
+		current_func.registros_temporales_.at(operando1.out_reg) = false;
+		current_func.registros_temporales_.at(operando2.out_reg) = false;
 	}
 	return resultado;
 }
@@ -156,12 +213,12 @@ bool Compilador::FindFuncTable(const std::string& nombre) {
 	return existe;
 }
 
-Eval_f_t Compilador::EvaluadorBool(int index, int n_tokens) {
-	Eval_f_t resultado;
+EvalExpr_t Compilador::EvaluadorBool(int index, int n_tokens) {
+	EvalExpr_t resultado;
 	if (n_tokens == 0) return resultado;
 	if (n_tokens == 1) {
 		assert(tokens_[index].first == token_t::LITERAL && static_cast<literal_e>(tokens_[index].second) == literal_e::BOOL);
-		resultado.literal = true;
+		resultado.is_literal = true;
 		bool temp{bool_literales_.front()};
 		bool_literales_.pop();
 		if (temp) {
@@ -180,16 +237,10 @@ Eval_f_t Compilador::EvaluadorBool(int index, int n_tokens) {
 	return resultado;
 }
 
-void Compilador::WriteBuffer(const archivo_t& buffer, write_buffer_e ans) {
+void Compilador::WriteBuffer(const archivo_t& buffer) {
 	if (buffer.empty()) return;
-	if (ans == write_buffer_e::END) {
-		for (const auto& i : buffer) {
-			text_segment_.push_back(i);
-		}
-	} else {
-		for (const auto& i : buffer) {
-			text_segment_.insert(text_segment_.end() - 1, i);
-		}
+	for (const auto& i : buffer) {
+		text_segment_.push_back(i);
 	}
 }
 
@@ -266,6 +317,74 @@ int Compilador::NextMatching(int index) {
 	return index;
 }
 
+int Compilador::PrevMatching(int index) {
+	assert(tokens_[index].first == token_t::SYMBOL);
+	int apertura{0};
+	int cerrura{1};
+	switch (static_cast<symbol_e>(tokens_[index].second)) {
+		case (symbol_e::PARENTESIS_A):
+			while (apertura != cerrura) {
+				switch (static_cast<symbol_e>(tokens_[--index].second)) {
+					case (symbol_e::PARENTESIS_A):
+						apertura++;
+						break;
+					case (symbol_e::PARENTESIS_C):
+						cerrura++;
+						break;
+					default:
+						break;
+				}
+			}
+			break;
+		case (symbol_e::CORCHETE_A):
+			while (apertura != cerrura) {
+				switch (static_cast<symbol_e>(tokens_[--index].second)) {
+					case (symbol_e::CORCHETE_A):
+						apertura++;
+						break;
+					case (symbol_e::CORCHETE_C):
+						cerrura++;
+						break;
+					default:
+						break;
+				}
+			}
+			break;
+		case (symbol_e::LLAVE_A):
+			while (apertura != cerrura) {
+				switch (static_cast<symbol_e>(tokens_[--index].second)) {
+					case (symbol_e::LLAVE_A):
+						apertura++;
+						break;
+					case (symbol_e::LLAVE_C):
+						cerrura++;
+						break;
+					default:
+						break;
+				}
+			}
+			break;
+		case (symbol_e::COMILLAAN_A):
+			while (apertura != cerrura) {
+				switch (static_cast<symbol_e>(tokens_[--index].second)) {
+					case (symbol_e::COMILLAAN_A):
+						apertura++;
+						break;
+					case (symbol_e::COMILLAAN_C):
+						cerrura++;
+						break;
+					default:
+						break;
+				}
+			}
+			break;
+		default:
+			throw std::runtime_error{"error coño"};
+			break;
+	}
+	return index;
+}
+
 std::string Compilador::EncontrarRegistroLibre(
 		const registros_t& registros) const {
 	for (const auto& i : registros) {
@@ -285,54 +404,56 @@ int Compilador::NextPuntoYComa(int index) {
 
 /**
  * @brief para inizializar las variables
- * @param buffer el buffer donde se anexa el literal
  * @param index	el índice del identificador
+ * @return devuelve un literal en el caso o si no un registro
  */
-void Compilador::var_init(archivo_t& buffer, int& index) {
+EvalExpr_t Compilador::VarInit(const int index) {
 	assert(tokens_[index].first == token_t::IDENTIFIER);
+	EvalExpr_t resultado;
 	if (tokens_[index + 1].first == token_t::SYMBOL) {
 		if (static_cast<symbol_e>(tokens_[index + 1].second) == symbol_e::PUNTOYCOMA) {
 			/// no está init
-			buffer.back().push_back('0');
+			resultado.out_reg = "$zero";
+			resultado.is_register = true;
 		} else if (static_cast<symbol_e>(tokens_[index + 1].second) == symbol_e::LLAVE_A) {
 			/// evaluar la expresión entre los corchetes
-			const auto&& temp{EvaluadorExpresiones(index + 2, NextMatching(index + 1) - (index + 1) - 1)};
-			if (temp.literal) {
-				buffer.back().append(temp.contenido[0]);
-			} else {
-				WriteBuffer(temp.contenido, write_buffer_e::ANS);
-			}
-			/// saltar los tokens analizados
-			index = NextPuntoYComa(index);
+			return EvaluadorExpresiones(index + 2, NextMatching(index + 1) - (index + 1) - 1);
 		}
 	} else if (tokens_[index + 1].first == token_t::OPERATOR) {
 		if (static_cast<operator_e>(tokens_[index + 1].second) == operator_e::ASIGNACION) {
-			const auto&& temp{EvaluadorExpresiones(index + 2, NextPuntoYComa(index + 2) - (index + 2))};
-			if (temp.literal) {
-				buffer.back().append(temp.contenido[0]);
-			} else {
-				WriteBuffer(temp.contenido, write_buffer_e::ANS);
-			}
-			index = NextPuntoYComa(index);
+			return EvaluadorExpresiones(index + 2, NextPuntoYComa(index + 2) - (index + 2));
 		} else {
 			throw std::runtime_error{"error de sintaxis"};
 		}
 	} else {
 		throw std::runtime_error{"error de sintaxis"};
 	}
+	return resultado;
 }
 
+/**
+ * @brief Aquí deberíamos escribir lo de poner en un buffer en espera para evaluar el var init primero
+ * @param buffer
+ * @param index
+ */
 void Compilador::DeclararVar(archivo_t& buffer, int& index) {
 	variables_t&& temp{identificadores_.front(), static_cast<tipos_e>(tokens_[index - 1].second), EncontrarRegistroLibre(current_func.registros_salvados_)};
 	current_func.variables_.push_back(temp);
 	identificadores_.pop();
 	current_func.registros_salvados_.at(current_func.variables_.back().registro) = true;
-	/// lo ponemos
-	buffer.push_back("li ");
-	buffer.back().append(current_func.variables_.back().registro);
-	buffer.back().append(",");
 	/// comprobamos si está inizializado
-	var_init(buffer, index);
+	const auto&& eval{VarInit(index)};
+	/// lo ponemos
+	if (eval.is_literal) {
+		buffer.push_back("li " + temp.registro + ',' + eval.out_reg);
+	} else if (eval.is_register) {
+		buffer.push_back("move " + temp.registro + ',' + eval.out_reg);
+	} else {
+		WriteBuffer(eval.contenido);
+		buffer.push_back("move " + temp.registro + ',' + eval.out_reg);
+	}
+	/// saltar los tokens analizados
+	index = NextPuntoYComa(index);
 }
 
 int Compilador::FuncCall(int index) {
@@ -352,14 +473,14 @@ int Compilador::FuncCall(int index) {
 			temp++;
 		}
 		const auto&& eval{EvaluadorExpresiones(index, n_tokens)};
-		if (eval.literal) {
+		if (eval.is_literal) {
 			text_segment_.push_back("li $a" + std::to_string(n_parameter++) + ',');
 			text_segment_.back().append(eval.contenido[0]);
-		} else if (eval.registro) {
+		} else if (eval.is_register) {
 			text_segment_.push_back("move $a" + std::to_string(n_parameter++) + ',');
 			text_segment_.back().append(eval.out_reg);
 		} else {
-			WriteBuffer(eval.contenido, write_buffer_e::END);
+			WriteBuffer(eval.contenido);
 			text_segment_.push_back("move $a" + std::to_string(n_parameter++) + ',' + "$t0");
 		}
 		index += n_tokens;
@@ -432,7 +553,7 @@ void Compilador::Generar() {
 						throw std::runtime_error{"tipo de var global no soportado"};
 					}
 					globl_vars_.push_back(var);
-					var_init(data_segment_, i); /// solo dios sabe si esto funciona
+					VarInit(i); /// solo dios sabe si esto funciona
 				}
 			} else {
 				/// es una llamada a función
@@ -449,8 +570,8 @@ void Compilador::Generar() {
 				assert(tokens_[i + 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::PARENTESIS_A);
 				text_segment_.push_back(current_func.identificador + "_while" + std::to_string(current_func.bucle_while_count_++) + ':');
 				const auto&& temp{EvaluadorBool(i + 2, NextMatching(i + 1) - (i + 2))};
-				if (temp.literal) throw std::runtime_error{"desgraciado, has escrito un bucle infinito"};
-				WriteBuffer(temp.contenido, write_buffer_e::END);
+				if (temp.is_literal) throw std::runtime_error{"desgraciado, has escrito un bucle infinito"};
+				WriteBuffer(temp.contenido);
 				archivo_t buffer;
 				buffer.push_back("b " + current_func.identificador + "_while" + std::to_string(current_func.bucle_while_count_ - 1));
 				buffer.push_back(current_func.identificador + "_while" + std::to_string(current_func.bucle_while_count_ - 1) + '_');
@@ -460,13 +581,13 @@ void Compilador::Generar() {
 				int index{i + 2};
 				int n_tokens{NextPuntoYComa(index) - index};
 				/// inicializar el iterador
-				WriteBuffer(EvaluadorExpresiones(index, n_tokens).contenido, write_buffer_e::END);
+				WriteBuffer(EvaluadorExpresiones(index, n_tokens).contenido);
 				/// escribir la etiqueta
 				text_segment_.push_back(current_func.identificador + "_for" + std::to_string(current_func.bucle_for_count_) + ':');
 				/// escribir la condición
 				index += n_tokens + 1;
 				n_tokens = NextPuntoYComa(index) - index;
-				WriteBuffer(EvaluadorBool(index, n_tokens).contenido, write_buffer_e::END);
+				WriteBuffer(EvaluadorBool(index, n_tokens).contenido);
 				/// poner lo de cerrar el bucle en la pila de cerrar bucles
 				index += n_tokens + 1;
 				n_tokens = NextPuntoYComa(index) - index;
@@ -477,12 +598,12 @@ void Compilador::Generar() {
 				/// evaluar la expresión y hacer branch
 				int n_tokens{NextPuntoYComa(i + 1) - (i + 1)};
 				const auto&& eval{EvaluadorExpresiones(i + 1, n_tokens)};
-				if (eval.literal) {
+				if (eval.is_literal) {
 					text_segment_.push_back("li $v0," + eval.contenido[0]);
-				} else if (eval.registro) {
+				} else if (eval.is_register) {
 					text_segment_.push_back("move $v0," + eval.out_reg);
 				} else {
-					WriteBuffer(eval.contenido, write_buffer_e::END);
+					WriteBuffer(eval.contenido);
 					text_segment_.push_back("move $v0," + eval.out_reg);
 				}
 				text_segment_.push_back("b " + current_func.identificador + '_');
@@ -492,7 +613,7 @@ void Compilador::Generar() {
 			/// suponemos que todas las demás llaves que no sean de funciones las hemos saltado
 			if (static_cast<symbol_e>(tokens_[i].second) == symbol_e::LLAVE_C) {
 				if (!cerrar_bucles_.empty()) {
-					WriteBuffer(cerrar_bucles_.top(), write_buffer_e::END);
+					WriteBuffer(cerrar_bucles_.top());
 					cerrar_bucles_.pop();
 				} else {
 					if (current_func.identificador != "main") {

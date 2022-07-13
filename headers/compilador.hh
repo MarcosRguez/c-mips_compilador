@@ -46,18 +46,19 @@ class Compilador {
 	void Preprocesar();
 	void Generar();
 
-	Eval_f_t EvaluadorExpresiones(int, int);
-	Eval_f_t EvaluadorBool(int, int);
+	EvalExpr_t EvaluadorExpresiones(int, int);
+	EvalExpr_t EvaluadorBool(int, int);
 
 	int InxOperador(const int index, const int n_tokens);
 	int FuncCall(int);
 	void DeclararVar(archivo_t& buffer, int& index);
-	void var_init(archivo_t& segment, int&);
+	EvalExpr_t VarInit(const int);
 	bool FindVarTable(const std::string&);
 	bool FindFuncTable(const std::string&);
 	std::string EncontrarRegistroLibre(
 			const registros_t&) const;
 	int NextMatching(int);
+	int PrevMatching(int);
 	int NextPuntoYComa(int);
-	void WriteBuffer(const archivo_t&, write_buffer_e);
+	void WriteBuffer(const archivo_t&);
 };

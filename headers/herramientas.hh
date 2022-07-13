@@ -23,6 +23,7 @@ using registros_t = std::map<std::string, bool>;
 
 int Precedencia(const operator_e op);
 int Aridad(const operator_e op);
+std::string GetInstruction(const operator_e op);
 
 struct variables_t {
 	std::string identificador{};
@@ -35,10 +36,10 @@ enum class write_buffer_e {
 	ANS
 };
 
-struct Eval_f_t {
+struct EvalExpr_t {
 	archivo_t contenido{};
-	bool literal{false};
-	bool registro{false};
+	bool is_literal{false};
+	bool is_register{false};
 	std::string out_reg{};
 };
 
