@@ -39,11 +39,6 @@ struct variables_t {
 	std::string registro{};
 };
 
-enum class write_buffer_e {
-	END,
-	ANS
-};
-
 struct EvalExpr_t {
 	archivo_t contenido{};
 	bool is_literal{false};
@@ -61,4 +56,5 @@ struct funciones_t {
 	registros_t registros_salvados_{};
 	int bucle_while_count_{};
 	int bucle_for_count_{};
+	int if_count_{};
 };
