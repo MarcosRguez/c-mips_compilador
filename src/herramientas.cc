@@ -20,6 +20,8 @@ int Precedencia(const operator_e op) {
 		return 6;
 	} else if (op == operator_e::IGUALQUE || op == operator_e::DESIGUALQUE) {
 		return 7;
+	} else if (op == operator_e::ASIGNACION) {
+		return 15;
 	} else if (op == operator_e::COMA) {
 		return 17;
 	} else {
@@ -37,6 +39,9 @@ int Aridad(const operator_e op) {
 
 std::string GetInstruction(const operator_e op) {
 	switch (op) {
+		case (operator_e::ASIGNACION):
+			return "move";
+			break;
 		case (operator_e::SUMA):
 			return "add";
 			break;

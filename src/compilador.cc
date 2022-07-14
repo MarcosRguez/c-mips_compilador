@@ -421,7 +421,9 @@ EvalExpr_t Compilador::VarInit(const int index) {
 			resultado.is_register = true;
 		} else if (static_cast<symbol_e>(tokens_[index + 1].second) == symbol_e::LLAVE_A) {
 			/// evaluar la expresión entre los corchetes
-			return EvaluadorExpresiones(index + 2, NextMatching(index + 1) - (index + 1) - 1);
+			auto&& temp{EvaluadorExpresiones(index + 2, NextMatching(index + 1) - (index + 1) - 1)};
+			temp.direct_init = true;
+			return temp;
 		}
 	} else if (tokens_[index + 1].first == token_t::OPERATOR) {
 		if (static_cast<operator_e>(tokens_[index + 1].second) == operator_e::ASIGNACION) {
@@ -448,8 +450,12 @@ void Compilador::DeclararVar(archivo_t& buffer, int& index) {
 	/// comprobamos si está inizializado
 	const auto&& eval{VarInit(index)};
 	/// lo ponemos
-	if (eval.is_literal) {
-		buffer.push_back("li " + temp.registro + ',' + eval.out_reg);
+	if (eval.direct_init) {
+		WriteBuffer(eval.contenido);
+		auto temp_pos = buffer.back().find(eval.out_reg);
+		buffer.back().replace(temp_pos, buffer.back().find(',') - temp_pos, temp.registro);
+	} else if (eval.is_literal) {
+		buffer.push_back("li " + temp.registro + ',' + eval.contenido[0]);
 	} else if (eval.is_register) {
 		buffer.push_back("move " + temp.registro + ',' + eval.out_reg);
 	} else {
@@ -563,9 +569,11 @@ void Compilador::Generar() {
 				/// es una llamada a función
 				if (tokens_[i - 1].first != token_t::TYPE && (tokens_[i + 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::PARENTESIS_A)) {
 					i = FuncCall(i);
-				} else {
+				} else if (tokens_[i - 1].first == token_t::TYPE) {
 					/// es una declaración de variable local
 					DeclararVar(text_segment_, i);
+				} else {
+					EvaluadorExpresiones(i, NextPuntoYComa(i) - i);
 				}
 			}
 		} else if (token == token_t::KEYWORD) {

@@ -40,6 +40,7 @@ struct EvalExpr_t {
 	archivo_t contenido{};
 	bool is_literal{false};
 	bool is_register{false};
+	bool direct_init{false};
 	std::string out_reg{};
 };
 
