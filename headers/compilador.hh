@@ -27,7 +27,7 @@ class Compilador {
 
  private:
 	/// Atributos
-	std::string source_{};
+	std::string source_{}; /// esto a lo mejor hace falta conservarlo más tarde para los operadores unarios o solucionar la correlación token/línea
 	int source_index_{};
 	archivo_t data_segment_{};
 	archivo_t text_segment_{};
@@ -52,7 +52,7 @@ class Compilador {
 	void Generar();
 
 	/// Evaluador de expresiones
-	EvalExpr_t EvaluadorExpresiones(int, int);
+	EvalExpr_t EvaluadorExpresiones(const int, const int);
 	EvalExpr_t EvaluadorBool(int, int); /// voy a combinarlos
 
 	/// Métodos que hacen cosas
@@ -62,7 +62,6 @@ class Compilador {
 
 	/// Métodos de ayuda
 	void WriteBuffer(const archivo_t&);
-	void ClearRegs(registros_t& regs);
-	bool FindFuncTable(const std::string&);
-	bool FindVarTable(const std::string&);
+	bool FindFuncTable(const std::string&) const;
+	bool FindVarTable(const std::string&) const;
 };

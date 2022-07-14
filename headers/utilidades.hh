@@ -1,7 +1,7 @@
 /**
  * @file utilidades.hh
  * @author MarcosRguez (alu0101470368@ull.edu.es)
- * @brief
+ * @brief utilidades genéricas para formatear archivos de texto
  * @version 0.1
  * @date 2022-04-07
  *
@@ -29,6 +29,6 @@ void EliminarEspacios(archivo_t&);
 bool MatchingBrackets(const std::string& sample);
 void EliminarCorchetes(archivo_t&);
 void EliminarBarrasInvertidas(archivo_t&);
-unsigned EncontrarFinFuncion(const archivo_t&, unsigned);
-void EliminarDirectivas(archivo_t&);
-unsigned EncontrarTextSegment(archivo_t&);
+// unsigned EncontrarFinFuncion(const archivo_t&, unsigned); /// no tan genérico
+// void EliminarDirectivas(archivo_t&);
+// unsigned EncontrarTextSegment(archivo_t&); /// no tan genérico

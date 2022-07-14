@@ -1,7 +1,7 @@
 /**
  * @file utilidades.cc
  * @author MarcosRguez (alu0101470368@ull.edu.es)
- * @brief
+ * @brief Implementación de utilidades genéricas
  * @version 0.1
  * @date 05-05-2022
  *
@@ -38,6 +38,11 @@ archivo_t LeerArchivo(const std::string& filename) {
 	return lineas;
 }
 
+/**
+ * @brief Hace lo que piensas que hace
+ * @param filename Nombre de archivo
+ * @return Cadena con el contenido del archivo
+ */
 std::string LeerArchivoSTR(const std::string& filename) {
 	std::fstream file;
 	file.open(filename, std::fstream::in);
@@ -48,7 +53,7 @@ std::string LeerArchivoSTR(const std::string& filename) {
 }
 
 /**
- * @brief Elimina los comentarios
+ * @brief Elimina los comentarios de doble barra al principio de cada línea
  * @param[out] archivo El archivo a operar.
  */
 void EliminarComentarios(archivo_t& archivo) {
@@ -86,6 +91,12 @@ void CrearArchivo(const std::string& filename_out, const std::string& ruta,
 	file.close();
 }
 
+/**
+ * @brief Comprueba si los paréntesis, corchetes y llaves se cierran correctamente
+ * @param sample texto
+ * @return true
+ * @return false
+ */
 bool MatchingBrackets(const std::string& sample) {
 	int parentesis = 0;
 	int corchetes = 0;
@@ -135,8 +146,8 @@ bool MatchingBrackets(const std::string& sample) {
 
 /**
  * @brief Crear archivo a partir de cadena
- * @param filename_out
- * @param contenido
+ * @param filename_out nombre de archivo resultante
+ * @param contenido texto
  */
 void CrearArchivo(const std::string& filename_out,
 									const std::string& contenido) {
@@ -194,9 +205,13 @@ void EliminarCaracteresFantasmas(archivo_t& archivo) {
 	}
 }
 
+/**
+ * @brief Elimina la indentación del archivo
+ * @param archivo objetivo
+ */
 void EliminarIndentacion(archivo_t& archivo) {
 	for (std::size_t i{0}; i < archivo.size(); ++i) {
-		while (archivo[i][0] == ' ') {
+		while (archivo[i][0] == ' ' || archivo[i][0] == '\t') {
 			archivo[i].erase(0, 1);
 		}
 	}
@@ -228,31 +243,33 @@ void EliminarBarrasInvertidas(archivo_t& archivo) {
 	}
 }
 
-unsigned EncontrarFinFuncion(const archivo_t& archivo, unsigned index) {
-	std::string linea;
-	unsigned indent_current;
-	do {
-		index++;
-		linea = archivo[index];
-		indent_current = linea.find_first_not_of(' ');
-	} while (indent_current != 0 || index >= archivo.size());
-	return index;
-}
+/// Esto de aquí abajo está obsoleto
 
-void EliminarDirectivas(archivo_t& archivo) {
-	for (unsigned i{0}; i < archivo.size(); i++) {
-		if (archivo[i].front() == '#') {
-			archivo.erase(archivo.begin() + i);
-			i--;
-		}
-	}
-}
+// unsigned EncontrarFinFuncion(const archivo_t& archivo, unsigned index) {
+// 	std::string linea;
+// 	unsigned indent_current;
+// 	do {
+// 		index++;
+// 		linea = archivo[index];
+// 		indent_current = linea.find_first_not_of(' ');
+// 	} while (indent_current != 0 || index >= archivo.size());
+// 	return index;
+// }
 
-unsigned EncontrarTextSegment(archivo_t& archivo) {
-	for (unsigned i{0}; i < archivo.size(); i++) {
-		if (archivo[i] == ".text") {
-			return i;
-		}
-	}
-	return 0;
-}
+// void EliminarDirectivas(archivo_t& archivo) {
+// 	for (unsigned i{0}; i < archivo.size(); i++) {
+// 		if (archivo[i].front() == '#') {
+// 			archivo.erase(archivo.begin() + i);
+// 			i--;
+// 		}
+// 	}
+// }
+
+// unsigned EncontrarTextSegment(archivo_t& archivo) {
+// 	for (unsigned i{0}; i < archivo.size(); i++) {
+// 		if (archivo[i] == ".text") {
+// 			return i;
+// 		}
+// 	}
+// 	return 0;
+// }

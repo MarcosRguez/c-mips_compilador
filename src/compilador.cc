@@ -17,6 +17,10 @@
 #include <stdexcept>
 #include <cassert>
 
+/**
+ * @brief Construye una instancia del tipo Compilador:: Compilador
+ * @param source El código fuente en formato de línea única
+ */
 Compilador::Compilador(const std::string& source) :
 		source_{source},
 		source_index_{0} {
@@ -28,6 +32,10 @@ Compilador::Compilador(const std::string& source) :
 	}
 }
 
+/**
+ * @brief Método público para compilar el código fuente
+ * @return El código MIPS ensamblador resultante
+ */
 std::string Compilador::Compilar() {
 	try {
 		/// En matchingamos los brakets
@@ -54,7 +62,7 @@ std::string Compilador::Compilar() {
 }
 
 /**
- * @brief Preprocesa el source_
+ * @brief Preprocesa el código fuente
  */
 void Compilador::Preprocesar() {
 	for (auto& i : source_) {
@@ -74,7 +82,7 @@ void Compilador::Preprocesar() {
 }
 
 /**
- * @brief Genera los tokens
+ * @brief Genera los tokens a partir del código fuente
  */
 void Compilador::Tokenizar() {
 	/// Preprocesar
@@ -320,6 +328,12 @@ void Compilador::Generar() {
 	}
 }
 
+/**
+ * @brief Evalua la expresión a partir de la lista de tokens
+ * @param index Índice del primer token a analizar de la lista de tokens
+ * @param n_tokens Número de tokens a analizar
+ * @return Devuelve un tipo especial con info sobre la evaluación
+ */
 EvalExpr_t Compilador::EvaluadorExpresiones(const int index, const int n_tokens) {
 	/// caso base: literal
 	/// caso base: identificador
@@ -447,6 +461,9 @@ EvalExpr_t Compilador::EvaluadorExpresiones(const int index, const int n_tokens)
 	return resultado;
 }
 
+/**
+ * voy a juntar esto pronto con el otro evaluador
+ */
 EvalExpr_t Compilador::EvaluadorBool(int index, int n_tokens) {
 	EvalExpr_t resultado;
 	if (n_tokens == 0) return resultado;
@@ -471,6 +488,10 @@ EvalExpr_t Compilador::EvaluadorBool(int index, int n_tokens) {
 	return resultado;
 }
 
+/**
+ * @brief Anexa lo que le pases al text_segment_
+ * @param buffer Contenido a anexar
+ */
 void Compilador::WriteBuffer(const archivo_t& buffer) {
 	if (buffer.empty()) return;
 	for (const auto& i : buffer) {
@@ -478,13 +499,12 @@ void Compilador::WriteBuffer(const archivo_t& buffer) {
 	}
 }
 
-void Compilador::ClearRegs(registros_t& regs) {
-	for (auto& i : regs) {
-		i.second = false;
-	}
-}
-
-bool Compilador::FindVarTable(const std::string& nombre) {
+/**
+ * @brief Busca una variable por nombre en la lista de variables locales de la función actual
+ * @param nombre nombre de búsqueda
+ * @return Devuelve verdadero si la encuentra
+ */
+bool Compilador::FindVarTable(const std::string& nombre) const {
 	bool existe{false};
 	for (const auto& i : current_func.variables_) {
 		if (i.identificador == nombre) {
@@ -495,7 +515,12 @@ bool Compilador::FindVarTable(const std::string& nombre) {
 	return existe;
 }
 
-bool Compilador::FindFuncTable(const std::string& nombre) {
+/**
+ * @brief Busca una función por nombre de la lista de funciones registradas
+ * @param nombre nombre de búsqueda
+ * @return Devuelve verdadero si la encuentra
+ */
+bool Compilador::FindFuncTable(const std::string& nombre) const {
 	bool existe{false};
 	for (const auto& i : funciones_) {
 		if (i.identificador == nombre) {
@@ -508,7 +533,7 @@ bool Compilador::FindFuncTable(const std::string& nombre) {
 
 /**
  * @brief para inizializar las variables
- * @param index	el índice del identificador
+ * @param index	el índice del identificador en la lista de tokens
  * @return devuelve un literal en el caso o si no un registro
  */
 EvalExpr_t Compilador::VarInit(const int index) {
@@ -538,9 +563,10 @@ EvalExpr_t Compilador::VarInit(const int index) {
 }
 
 /**
- * @brief Aquí deberíamos escribir lo de poner en un buffer en espera para evaluar el var init primero
- * @param buffer
- * @param index
+ * @brief Registra una variable en la tabla de varibles locales
+ * @param buffer Esto no debería estar, ¿o sí?
+ * @param index	Índice del identificador, debería no ser ref
+ * @return Devuelve el nuevo índice habiendo saltado los tokens analizados
  */
 void Compilador::DeclararVar(archivo_t& buffer, int& index) {
 	variables_t&& temp{identificadores_.front(), static_cast<tipos_e>(tokens_[index - 1].second), EncontrarRegistroLibre(current_func.registros_salvados_)};
@@ -566,9 +592,14 @@ void Compilador::DeclararVar(archivo_t& buffer, int& index) {
 	index = NextPuntoYComa(tokens_, index);
 }
 
+/**
+ * @brief Carga argumentos y llama a la función
+ * @param index
+ * @return int
+ */
 int Compilador::FuncCall(int index) {
 	if (!FindFuncTable(identificadores_.front())) {
-		throw std::runtime_error{"declaración implícita de función"};
+		throw std::runtime_error{"función desconocida"};
 	}
 	index += 2;
 	int n_parameter{0};

@@ -1,7 +1,7 @@
 /**
  * @file herramientas.cc
  * @author MarcosRguez (alu0101470368@ull.edu.es)
- * @brief
+ * @brief Implementación de funcioncitas
  * @version 0.1
  * @date 12-07-2022
  *
@@ -246,6 +246,23 @@ std::string EncontrarRegistroLibre(
 	return NULL;
 }
 
+/**
+ * @brief Establece a false (no usado) todos los registros de la lista pasada
+ * @param regs lista de registros
+ */
+void ClearRegs(registros_t& regs) {
+	for (auto& i : regs) {
+		i.second = false;
+	}
+}
+
+/**
+ * @brief Ecuentra el próximo punto y coma
+ * @param cosa lista de tokens
+ * @param index índice al partir el cual buscar
+ * @return índice del punto y coma
+ * @note tengo que hacer que salte los literales de char y str
+ */
 int NextPuntoYComa(const tokenlist_t& cosa, int index) {
 	while (!(cosa[index].first == token_t::SYMBOL && static_cast<symbol_e>(cosa[index].second) == symbol_e::PUNTOYCOMA)) {
 		index++;

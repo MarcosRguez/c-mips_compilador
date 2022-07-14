@@ -1,7 +1,7 @@
 /**
  * @file enums.hh
  * @author MarcosRguez (alu0101470368@ull.edu.es)
- * @brief
+ * @brief Clasificación de tokens (Gramática)
  * @version 0.1
  * @date 26-06-2022
  *
@@ -11,6 +11,9 @@
 
 #pragma once
 
+/**
+ * @brief Tipo primario
+ */
 enum class token_t {
 	KEYWORD,
 	TYPE,
@@ -20,6 +23,8 @@ enum class token_t {
 	OPERATOR
 };
 
+/// Subtipos
+
 enum class literal_e {
 	STR,
 	INT,
@@ -28,7 +33,8 @@ enum class literal_e {
 };
 
 enum class directivas_e {
-	INCLUDE
+	INCLUDE,
+	PRAGMA
 };
 
 enum class tipos_e {

@@ -1,7 +1,7 @@
 /**
  * @file herramientas.hh
  * @author MarcosRguez (alu0101470368@ull.edu.es)
- * @brief
+ * @brief Cosas útiles no genéricas
  * @version 0.1
  * @date 13-07-2022
  *
@@ -19,25 +19,12 @@
 #include <queue>
 #include <stack>
 
+/// Alias de tipo
+
 using registros_t = std::map<std::string, bool>;
 using tokenlist_t = std::vector<std::pair<token_t, unsigned>>;
 
-int Precedencia(const operator_e op);
-int Aridad(const operator_e op);
-std::string GetInstruction(const operator_e op);
-int OpArgs(const operator_e op);
-int InxOperador(const tokenlist_t& cosa);
-int NextMatching(const tokenlist_t& cosa, int index);
-int PrevMatching(const tokenlist_t& cosa, int index);
-std::string EncontrarRegistroLibre(
-		const registros_t& registros);
-int NextPuntoYComa(const tokenlist_t& cosa, int index);
-
-struct variables_t {
-	std::string identificador{};
-	tipos_e tipo{};
-	std::string registro{};
-};
+/// Structs
 
 struct EvalExpr_t {
 	archivo_t contenido{};
@@ -45,6 +32,12 @@ struct EvalExpr_t {
 	bool is_register{false};
 	bool direct_init{false};
 	std::string out_reg{};
+};
+
+struct variables_t {
+	std::string identificador{};
+	tipos_e tipo{};
+	std::string registro{};
 };
 
 struct funciones_t {
@@ -58,3 +51,17 @@ struct funciones_t {
 	int bucle_for_count_{};
 	int if_count_{};
 };
+
+/// Funciones
+
+int Precedencia(const operator_e op);
+int Aridad(const operator_e op);
+std::string GetInstruction(const operator_e op);
+int OpArgs(const operator_e op);
+int InxOperador(const tokenlist_t& cosa);
+int NextMatching(const tokenlist_t& cosa, int index);
+int PrevMatching(const tokenlist_t& cosa, int index);
+std::string EncontrarRegistroLibre(
+		const registros_t& registros);
+int NextPuntoYComa(const tokenlist_t& cosa, int index);
+void ClearRegs(registros_t& regs);

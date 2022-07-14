@@ -1,7 +1,7 @@
 /**
  * @file mapeos.hh
  * @author MarcosRguez (alu0101470368@ull.edu.es)
- * @brief
+ * @brief Mapeo de texto a tokens
  * @version 0.1
  * @date 26-06-2022
  *

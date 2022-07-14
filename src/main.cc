@@ -1,7 +1,8 @@
 /**
  * @file main.cc
  * @author MarcosRguez (alu0101470368@ull.edu.es)
- * @brief
+ * @brief Programa para compilar a MIPS ensamblador
+ * De momento no soporta multiarchivo
  * @version 0.1
  * @date 25-06-2022
  *
