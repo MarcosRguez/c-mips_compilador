@@ -52,8 +52,7 @@ class Compilador {
 	void Generar();
 
 	/// Evaluador de expresiones
-	EvalExpr_t EvaluadorExpresiones(const int, const int);
-	EvalExpr_t EvaluadorBool(int, int); /// voy a combinarlos
+	EvalExpr_t EvaluadorExpresiones(const tokenlist_t&, const int, const int);
 
 	/// Métodos que hacen cosas
 	int FuncCall(int);

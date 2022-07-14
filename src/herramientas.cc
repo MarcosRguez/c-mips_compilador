@@ -14,7 +14,9 @@
 #include <cassert>
 
 int Precedencia(const operator_e op) {
-	if (op == operator_e::PRODUCTO || op == operator_e::DIVISION || op == operator_e::MODULO) {
+	if (op == operator_e::NOT) {
+		return 2;
+	} else if (op == operator_e::PRODUCTO || op == operator_e::DIVISION || op == operator_e::MODULO) {
 		return 4;
 	} else if (op == operator_e::SUMA || op == operator_e::RESTA) {
 		return 5;
@@ -22,6 +24,10 @@ int Precedencia(const operator_e op) {
 		return 6;
 	} else if (op == operator_e::IGUALQUE || op == operator_e::DESIGUALQUE) {
 		return 7;
+	} else if (op == operator_e::AND) {
+		return 12;
+	} else if (op == operator_e::OR) {
+		return 13;
 	} else if (op == operator_e::ASIGNACION) {
 		return 15;
 	} else if (op == operator_e::COMA) {
@@ -40,13 +46,12 @@ int Aridad(const operator_e op) {
 }
 
 int OpArgs(const operator_e op) {
-	switch (op) {
-		case (operator_e::ASIGNACION):
-			return 2;
-			break;
-		default:
-			return 3;
-			break;
+	if (op == operator_e::AND || op == operator_e::OR || op == operator_e::NOT) {
+		return 1;
+	} else if (op == operator_e::ASIGNACION) {
+		return 2;
+	} else {
+		return 3;
 	}
 }
 
@@ -197,6 +202,7 @@ int InxOperador(const tokenlist_t& cosa) {
 	for (int i{0}; i < cosa.size(); i++) {
 		if (cosa[i].first == token_t::OPERATOR) {
 			if (Precedencia(static_cast<operator_e>(cosa[i].second)) < precedencia) {
+				precedencia = Precedencia(static_cast<operator_e>(cosa[i].second));
 				resultado = i;
 			}
 		} else if (cosa[i].first == token_t::SYMBOL && static_cast<symbol_e>(cosa[i].second) == symbol_e::PARENTESIS_A) {
@@ -229,6 +235,18 @@ std::string GetInstruction(const operator_e op) {
 			break;
 		case (operator_e::DIVISION):
 			return "div";
+			break;
+		case (operator_e::MENORIGUAL):
+			return "ble";
+			break;
+		case (operator_e::MENORQUE):
+			return "blt";
+			break;
+		case (operator_e::MAYORIGUAL):
+			return "bge";
+			break;
+		case (operator_e::MAYORQUE):
+			return "bgt";
 			break;
 		default:
 			break;

@@ -20,21 +20,25 @@ enum class token_t {
 	IDENTIFIER,
 	LITERAL,
 	SYMBOL,
-	OPERATOR
+	OPERATOR,
+	REGISTER /// especial para evaluar expresiones
 };
 
 /// Subtipos
 
 enum class literal_e {
-	STR,
+	BOOL,
+	CHAR,
 	INT,
+	FLOAT,
 	DOUBLE,
-	BOOL
+	STR
 };
 
 enum class directivas_e {
 	INCLUDE,
-	PRAGMA
+	PRAGMA,
+	DEFINE
 };
 
 enum class tipos_e {
