@@ -20,10 +20,18 @@
 #include <stack>
 
 using registros_t = std::map<std::string, bool>;
+using tokenlist_t = std::vector<std::pair<token_t, unsigned>>;
 
 int Precedencia(const operator_e op);
 int Aridad(const operator_e op);
 std::string GetInstruction(const operator_e op);
+int OpArgs(const operator_e op);
+int InxOperador(const tokenlist_t& cosa);
+int NextMatching(const tokenlist_t& cosa, int index);
+int PrevMatching(const tokenlist_t& cosa, int index);
+std::string EncontrarRegistroLibre(
+		const registros_t& registros);
+int NextPuntoYComa(const tokenlist_t& cosa, int index);
 
 struct variables_t {
 	std::string identificador{};

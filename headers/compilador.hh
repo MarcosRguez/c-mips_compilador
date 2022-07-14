@@ -31,7 +31,7 @@ class Compilador {
 	int source_index_{};
 	archivo_t data_segment_{};
 	archivo_t text_segment_{};
-	std::vector<std::pair<token_t, unsigned>> tokens_{};
+	tokenlist_t tokens_{};
 	std::queue<std::string> identificadores_{}; /// Identificadores sin identificar
 	std::queue<bool> bool_literales_{};
 	std::queue<int> int_literales_{};
@@ -49,17 +49,11 @@ class Compilador {
 	EvalExpr_t EvaluadorExpresiones(int, int);
 	EvalExpr_t EvaluadorBool(int, int);
 
-	int InxOperador(const int index, const int n_tokens);
 	void ClearRegs(registros_t& regs);
 	int FuncCall(int);
 	void DeclararVar(archivo_t& buffer, int& index);
 	EvalExpr_t VarInit(const int);
 	bool FindVarTable(const std::string&);
 	bool FindFuncTable(const std::string&);
-	std::string EncontrarRegistroLibre(
-			const registros_t&) const;
-	int NextMatching(int);
-	int PrevMatching(int);
-	int NextPuntoYComa(int);
 	void WriteBuffer(const archivo_t&);
 };

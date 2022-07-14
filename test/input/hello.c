@@ -1,5 +1,9 @@
 int main() {
-	int basta{6};
-	basta = 9;
+	int acs{1 + 2 + 3};
+	bool a{true};
+	bool b{false};
+	if (a || b) {
+		int a;
+	}
 	return 0;
 }

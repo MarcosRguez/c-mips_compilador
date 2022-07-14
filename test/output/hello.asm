@@ -1,9 +1,9 @@
 .data
 .text
 main:
-li $t0,6
-li $t1,2
-sub $s0,$t0,$t1
+li $s0,6
+li $t0,9
+move $s0,$t0
 li $v0,0
 b main_
 main_:

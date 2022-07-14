@@ -9,9 +9,13 @@ b:.word 2
 func:
 
 main:
-	li $v0,4
-	la $a0,str0
-	syscall
-	jal func
+	li $s0,1
+	li $s1,0
+	bnez $s0,if
+	bnez $s1,if
+		b if_
+	if:
+		# stuff
+	if_:
 	li $v0,10
 	syscall
