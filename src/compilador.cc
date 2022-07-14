@@ -257,14 +257,18 @@ void Compilador::Generar() {
 			auto tipo{static_cast<keyword_e>(tokens_[i].second)};
 			if (tipo == keyword_e::WHILE) {
 				assert(tokens_[i + 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::PARENTESIS_A);
-				text_segment_.push_back(current_func.identificador + "_while" + std::to_string(current_func.bucle_while_count_++) + ':');
-				const auto&& temp{EvaluadorExpresiones(tokens_, i + 2, NextMatching(tokens_, i + 1) - (i + 2))};
+				std::string label{current_func.identificador + "_while" + std::to_string(current_func.bucle_while_count_++)};
+				text_segment_.push_back(label + ':');
+				int n_tokens{NextMatching(tokens_, i + 1) - (i + 2)};
+				const auto&& temp{EvaluadorExpresiones(tokens_, i + 2, n_tokens)};
 				if (temp.is_literal) throw std::runtime_error{"desgraciado, has escrito un bucle infinito"};
 				WriteBuffer(temp.contenido);
+				text_segment_.push_back("bnez " + temp.out_reg + ',' + label + '_');
 				archivo_t buffer;
 				buffer.push_back("b " + current_func.identificador + "_while" + std::to_string(current_func.bucle_while_count_ - 1));
-				buffer.push_back(current_func.identificador + "_while" + std::to_string(current_func.bucle_while_count_ - 1) + '_');
+				buffer.push_back(current_func.identificador + "_while" + std::to_string(current_func.bucle_while_count_ - 1) + '_' + ':');
 				cerrar_bucles_.push(buffer);
+				i += n_tokens + 3;
 			} else if (tipo == keyword_e::FOR) {
 				assert(tokens_[i + 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::PARENTESIS_A);
 				int index{i + 2};

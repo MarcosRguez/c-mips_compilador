@@ -54,14 +54,14 @@ struct funciones_t {
 
 /// Funciones
 
-int Precedencia(const operator_e op);
 int Aridad(const operator_e op);
-std::string GetInstruction(const operator_e op);
 int OpArgs(const operator_e op);
+int Precedencia(const operator_e op);
+std::string GetInstruction(const operator_e op);
 int InxOperador(const tokenlist_t& cosa);
 int NextMatching(const tokenlist_t& cosa, int index);
+int NextPuntoYComa(const tokenlist_t& cosa, int index);
 int PrevMatching(const tokenlist_t& cosa, int index);
+void ClearRegs(registros_t& regs);
 std::string EncontrarRegistroLibre(
 		const registros_t& registros);
-int NextPuntoYComa(const tokenlist_t& cosa, int index);
-void ClearRegs(registros_t& regs);
