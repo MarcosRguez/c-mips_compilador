@@ -56,7 +56,7 @@ class Compilador {
 
 	/// Métodos que hacen cosas
 	int FuncCall(int);
-	void DeclararVar(archivo_t& buffer, int& index);
+	void DeclararVar(archivo_t& buffer, const int index);
 	EvalExpr_t VarInit(const int);
 
 	/// Métodos de ayuda

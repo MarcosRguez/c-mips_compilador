@@ -61,8 +61,6 @@ const std::map<char, symbol_e> m_symbol{
 		{']', symbol_e::CORCHETE_C},
 		{'{', symbol_e::LLAVE_A},
 		{'}', symbol_e::LLAVE_C},
-		{'<', symbol_e::COMILLAAN_A},
-		{'>', symbol_e::COMILLAAN_C},
 		{';', symbol_e::PUNTOYCOMA},
 		{'\'', symbol_e::COMILLA},
 		{'\"', symbol_e::COMILLAS}};

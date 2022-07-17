@@ -249,6 +249,7 @@ void Compilador::Generar() {
 				} else if (tokens_[i - 1].first == token_t::TYPE) {
 					/// es una declaración de variable local
 					DeclararVar(text_segment_, i);
+					i = NextPuntoYComa(tokens_, i);
 				} else {
 					WriteBuffer(EvaluadorExpresiones(tokens_, i, NextPuntoYComa(tokens_, i) - i).contenido);
 				}
@@ -276,11 +277,13 @@ void Compilador::Generar() {
 				/// inicializar el iterador
 				WriteBuffer(EvaluadorExpresiones(tokens_, index, n_tokens).contenido);
 				/// escribir la etiqueta
-				text_segment_.push_back(current_func.identificador + "_for" + std::to_string(current_func.bucle_for_count_) + ':');
+				std::string label{current_func.identificador + "_for" + std::to_string(current_func.bucle_for_count_)};
+				text_segment_.push_back(label + ':');
 				/// escribir la condición
 				index += n_tokens + 1;
 				n_tokens = NextPuntoYComa(tokens_, index) - index;
 				WriteBuffer(EvaluadorExpresiones(tokens_, index, n_tokens).contenido);
+				text_segment_.back().append(',' + label + "_:");
 				/// poner lo de cerrar el bucle en la pila de cerrar bucles
 				index += n_tokens + 1;
 				n_tokens = NextPuntoYComa(tokens_, index) - index;
@@ -412,6 +415,12 @@ EvalExpr_t Compilador::EvaluadorExpresiones(const tokenlist_t& tlist, const int 
 			return resultado;
 		}
 	}
+	/// declaración
+	if (tlist[index].first == token_t::TYPE) {
+		assert(tlist[index + 1].first == token_t::IDENTIFIER);
+		DeclararVar(text_segment_, index + 1);
+		return resultado;
+	}
 	/// hacemos una copia
 	tokenlist_t copia;
 	for (int i{index}; i < index + n_tokens; i++) {
@@ -511,7 +520,9 @@ EvalExpr_t Compilador::EvaluadorExpresiones(const tokenlist_t& tlist, const int 
 		copia.insert(copia.begin() + lower_index, std::make_pair(token_t::REGISTER, stoul(resultado.out_reg.substr(2, 2))));
 		/// liberamos los registros temporales
 		ClearRegs(current_func.registros_temporales_);
-		current_func.registros_temporales_.at(resultado.out_reg) = true;
+		if (current_func.registros_temporales_.find(resultado.out_reg) != current_func.registros_temporales_.end()) {
+			current_func.registros_temporales_.at(resultado.out_reg) = true;
+		}
 	}
 	return resultado;
 }
@@ -596,7 +607,7 @@ EvalExpr_t Compilador::VarInit(const int index) {
  * @param index	Índice del identificador, debería no ser ref
  * @return Devuelve el nuevo índice habiendo saltado los tokens analizados
  */
-void Compilador::DeclararVar(archivo_t& buffer, int& index) {
+void Compilador::DeclararVar(archivo_t& buffer, const int index) {
 	variables_t&& temp{identificadores_.front(), static_cast<tipos_e>(tokens_[index - 1].second), EncontrarRegistroLibre(current_func.registros_salvados_)};
 	current_func.variables_.push_back(temp);
 	identificadores_.pop();
@@ -618,8 +629,6 @@ void Compilador::DeclararVar(archivo_t& buffer, int& index) {
 	}
 	/// Limpiar registros temporales
 	ClearRegs(current_func.registros_temporales_);
-	/// saltar los tokens analizados
-	index = NextPuntoYComa(tokens_, index);
 }
 
 /**

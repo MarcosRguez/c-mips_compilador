@@ -48,7 +48,7 @@ int Aridad(const operator_e op) {
 int OpArgs(const operator_e op) {
 	if (op == operator_e::AND || op == operator_e::OR || op == operator_e::NOT) {
 		return 1;
-	} else if (op == operator_e::ASIGNACION) {
+	} else if (op == operator_e::ASIGNACION || op == operator_e::MENORIGUAL || op == operator_e::MENORQUE || op == operator_e::MAYORIGUAL || op == operator_e::MAYORQUE) {
 		return 2;
 	} else {
 		return 3;
