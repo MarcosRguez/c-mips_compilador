@@ -283,11 +283,15 @@ void Compilador::Generar() {
 				index += n_tokens + 1;
 				n_tokens = NextPuntoYComa(tokens_, index) - index;
 				WriteBuffer(EvaluadorExpresiones(tokens_, index, n_tokens).contenido);
-				text_segment_.back().append(',' + label + "_:");
+				text_segment_.back().append(',' + label + '_');
 				/// poner lo de cerrar el bucle en la pila de cerrar bucles
 				index += n_tokens + 1;
 				n_tokens = NextMatching(tokens_, i + 1) - index;
-				cerrar_bucles_.push(EvaluadorExpresiones(tokens_, index, n_tokens).contenido);
+				archivo_t for_end{EvaluadorExpresiones(tokens_, index, n_tokens).contenido};
+				for_end.push_back("b " + label);
+				for_end.push_back(label + "_:");
+				cerrar_bucles_.push(for_end);
+				i += NextMatching(tokens_, i + 1) - i;
 			} else if (tipo == keyword_e::IF) {
 				assert(tokens_[i + 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::PARENTESIS_A);
 				int n_tokens{NextMatching(tokens_, i + 1) - (i + 2)};
@@ -393,7 +397,7 @@ EvalExpr_t Compilador::EvaluadorExpresiones(const tokenlist_t& tlist, const int 
 			for (const auto& i : current_func.variables_) {
 				if (i.identificador == identificadores_.front()) {
 					resultado.out_reg = i.registro;
-					identificadores_.pop();
+					identificadores_.pop(); /// si se evalua en desorden se jode
 					return resultado;
 				}
 			}
