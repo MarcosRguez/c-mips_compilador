@@ -64,66 +64,16 @@ int NextMatching(const tokenlist_t& cosa, int index) {
 	assert(cosa[index].first == token_t::SYMBOL);
 	int apertura{1};
 	int cerrura{0};
-	switch (static_cast<symbol_e>(cosa[index].second)) {
-		case (symbol_e::PARENTESIS_A):
-			while (apertura != cerrura) {
-				switch (static_cast<symbol_e>(cosa[++index].second)) {
-					case (symbol_e::PARENTESIS_A):
-						apertura++;
-						break;
-					case (symbol_e::PARENTESIS_C):
-						cerrura++;
-						break;
-					default:
-						break;
-				}
+	unsigned code{cosa[index].second};
+	while (apertura != cerrura) {
+		index++;
+		if (cosa[index].first == token_t::SYMBOL) {
+			if (cosa[index].second == code) {
+				apertura++;
+			} else if (cosa[index].second == code + 1) {
+				cerrura++;
 			}
-			break;
-		case (symbol_e::CORCHETE_A):
-			while (apertura != cerrura) {
-				switch (static_cast<symbol_e>(cosa[++index].second)) {
-					case (symbol_e::CORCHETE_A):
-						apertura++;
-						break;
-					case (symbol_e::CORCHETE_C):
-						cerrura++;
-						break;
-					default:
-						break;
-				}
-			}
-			break;
-		case (symbol_e::LLAVE_A):
-			while (apertura != cerrura) {
-				switch (static_cast<symbol_e>(cosa[++index].second)) {
-					case (symbol_e::LLAVE_A):
-						apertura++;
-						break;
-					case (symbol_e::LLAVE_C):
-						cerrura++;
-						break;
-					default:
-						break;
-				}
-			}
-			break;
-		case (symbol_e::COMILLAAN_A):
-			while (apertura != cerrura) {
-				switch (static_cast<symbol_e>(cosa[++index].second)) {
-					case (symbol_e::COMILLAAN_A):
-						apertura++;
-						break;
-					case (symbol_e::COMILLAAN_C):
-						cerrura++;
-						break;
-					default:
-						break;
-				}
-			}
-			break;
-		default:
-			throw std::runtime_error{"error coño"};
-			break;
+		}
 	}
 	return index;
 }
@@ -132,66 +82,16 @@ int PrevMatching(const tokenlist_t& cosa, int index) {
 	assert(cosa[index].first == token_t::SYMBOL);
 	int apertura{0};
 	int cerrura{1};
-	switch (static_cast<symbol_e>(cosa[index].second)) {
-		case (symbol_e::PARENTESIS_A):
-			while (apertura != cerrura) {
-				switch (static_cast<symbol_e>(cosa[--index].second)) {
-					case (symbol_e::PARENTESIS_A):
-						apertura++;
-						break;
-					case (symbol_e::PARENTESIS_C):
-						cerrura++;
-						break;
-					default:
-						break;
-				}
+	unsigned code{cosa[index].second};
+	while (apertura != cerrura) {
+		index++;
+		if (cosa[index].first == token_t::SYMBOL) {
+			if (cosa[index].second == code) {
+				apertura++;
+			} else if (cosa[index].second == code - 1) {
+				cerrura++;
 			}
-			break;
-		case (symbol_e::CORCHETE_A):
-			while (apertura != cerrura) {
-				switch (static_cast<symbol_e>(cosa[--index].second)) {
-					case (symbol_e::CORCHETE_A):
-						apertura++;
-						break;
-					case (symbol_e::CORCHETE_C):
-						cerrura++;
-						break;
-					default:
-						break;
-				}
-			}
-			break;
-		case (symbol_e::LLAVE_A):
-			while (apertura != cerrura) {
-				switch (static_cast<symbol_e>(cosa[--index].second)) {
-					case (symbol_e::LLAVE_A):
-						apertura++;
-						break;
-					case (symbol_e::LLAVE_C):
-						cerrura++;
-						break;
-					default:
-						break;
-				}
-			}
-			break;
-		case (symbol_e::COMILLAAN_A):
-			while (apertura != cerrura) {
-				switch (static_cast<symbol_e>(cosa[--index].second)) {
-					case (symbol_e::COMILLAAN_A):
-						apertura++;
-						break;
-					case (symbol_e::COMILLAAN_C):
-						cerrura++;
-						break;
-					default:
-						break;
-				}
-			}
-			break;
-		default:
-			throw std::runtime_error{"error coño"};
-			break;
+		}
 	}
 	return index;
 }

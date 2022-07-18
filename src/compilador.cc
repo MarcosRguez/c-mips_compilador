@@ -286,7 +286,7 @@ void Compilador::Generar() {
 				text_segment_.back().append(',' + label + "_:");
 				/// poner lo de cerrar el bucle en la pila de cerrar bucles
 				index += n_tokens + 1;
-				n_tokens = NextPuntoYComa(tokens_, index) - index;
+				n_tokens = NextMatching(tokens_, i + 1) - index;
 				cerrar_bucles_.push(EvaluadorExpresiones(tokens_, index, n_tokens).contenido);
 			} else if (tipo == keyword_e::IF) {
 				assert(tokens_[i + 1].first == token_t::SYMBOL && static_cast<symbol_e>(tokens_[i + 1].second) == symbol_e::PARENTESIS_A);
