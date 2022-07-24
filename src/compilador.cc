@@ -282,7 +282,16 @@ void Compilador::Generar() {
 				/// escribir la condición
 				index += n_tokens + 1;
 				n_tokens = NextPuntoYComa(tokens_, index) - index;
-				WriteBuffer(EvaluadorExpresiones(tokens_, index, n_tokens).contenido);
+				/// Hacemos una copia para invertir la condición
+				tokenlist_t copia;
+				for (int i{index}; i < n_tokens + index; i++) {
+					copia.push_back(tokens_[i]);
+				}
+				copia.insert(copia.begin(), std::make_pair(token_t::SYMBOL, static_cast<unsigned>(symbol_e::PARENTESIS_A)));
+				copia.insert(copia.begin(),
+										 std::make_pair(token_t::OPERATOR, static_cast<unsigned>(operator_e::NOT)));
+				copia.push_back(std::make_pair(token_t::SYMBOL, static_cast<unsigned>(symbol_e::PARENTESIS_C)));
+				WriteBuffer(EvaluadorExpresiones(copia, 0, copia.size()).contenido);
 				text_segment_.back().append(',' + label + '_');
 				/// poner lo de cerrar el bucle en la pila de cerrar bucles
 				index += n_tokens + 1;
@@ -436,8 +445,21 @@ EvalExpr_t Compilador::EvaluadorExpresiones(const tokenlist_t& tlist, const int 
 		int op_index{InxOperador(copia)};
 		int lower_index{};
 		int upper_index{};
+		int aridad{Aridad(static_cast<operator_e>(copia[op_index].second))};
 		/// si el operador en cuestión es de aridad 2
-		if (Aridad(static_cast<operator_e>(copia[op_index].second)) == 2) {
+		if (aridad == 1) {
+			EvalExpr_t operando;
+			/// Si el operador es NOT !
+			if (copia[op_index].first == token_t::OPERATOR && static_cast<operator_e>(copia[op_index].second) == operator_e::NOT) {
+				if (op_index == 0) {
+					if (copia[op_index + 1].first == token_t::SYMBOL && static_cast<symbol_e>(copia[op_index + 1].second) == symbol_e::PARENTESIS_A) {
+						if (NextMatching(copia, op_index + 1) == copia.size() - 1) {
+							operando = EvaluadorExpresiones(copia);
+						}
+					}
+				}
+			}
+		} else if (aridad == 2) {
 			/// evaluamos lo primero y sustituimos el primer operando por el outreg
 			EvalExpr_t operando1;
 			/// comprobamos si la expr está entre paréntesis

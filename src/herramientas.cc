@@ -12,6 +12,7 @@
 #include "../headers/compilador.hh"
 
 #include <cassert>
+#include <stdexcept>
 
 int Precedencia(const operator_e op) {
 	if (op == operator_e::NOT) {
@@ -35,6 +36,7 @@ int Precedencia(const operator_e op) {
 	} else {
 		throw std::runtime_error{"operador sin precedencia conocida."};
 	}
+	return 0;
 }
 
 int Aridad(const operator_e op) {
