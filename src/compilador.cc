@@ -283,16 +283,18 @@ void Compilador::Generar() {
 				index += n_tokens + 1;
 				n_tokens = NextPuntoYComa(tokens_, index) - index;
 				/// Hacemos una copia para invertir la condición
-				tokenlist_t copia;
-				for (int i{index}; i < n_tokens + index; i++) {
-					copia.push_back(tokens_[i]);
-				}
-				copia.insert(copia.begin(), std::make_pair(token_t::SYMBOL, static_cast<unsigned>(symbol_e::PARENTESIS_A)));
-				copia.insert(copia.begin(),
-										 std::make_pair(token_t::OPERATOR, static_cast<unsigned>(operator_e::NOT)));
-				copia.push_back(std::make_pair(token_t::SYMBOL, static_cast<unsigned>(symbol_e::PARENTESIS_C)));
-				WriteBuffer(EvaluadorExpresiones(copia, 0, copia.size()).contenido);
-				text_segment_.back().append(',' + label + '_');
+				// tokenlist_t copia;
+				// for (int i{index}; i < n_tokens + index; i++) {
+				// 	copia.push_back(tokens_[i]);
+				// }
+				// copia.insert(copia.begin(), std::make_pair(token_t::SYMBOL, static_cast<unsigned>(symbol_e::PARENTESIS_A)));
+				// copia.insert(copia.begin(),
+				// 						 std::make_pair(token_t::OPERATOR, static_cast<unsigned>(operator_e::NOT)));
+				// copia.push_back(std::make_pair(token_t::SYMBOL, static_cast<unsigned>(symbol_e::PARENTESIS_C)));
+				// const auto eval{EvaluadorExpresiones(copia, 0, copia.size())};
+				const auto eval{EvaluadorExpresiones(tokens_, index, n_tokens)};
+				WriteBuffer(eval.contenido);
+				text_segment_.push_back("beqz " + eval.out_reg + ',' + label + '_');
 				/// poner lo de cerrar el bucle en la pila de cerrar bucles
 				index += n_tokens + 1;
 				n_tokens = NextMatching(tokens_, i + 1) - index;
@@ -454,7 +456,7 @@ EvalExpr_t Compilador::EvaluadorExpresiones(const tokenlist_t& tlist, const int 
 				if (op_index == 0) {
 					if (copia[op_index + 1].first == token_t::SYMBOL && static_cast<symbol_e>(copia[op_index + 1].second) == symbol_e::PARENTESIS_A) {
 						if (NextMatching(copia, op_index + 1) == copia.size() - 1) {
-							operando = EvaluadorExpresiones(copia);
+							// operando = EvaluadorExpresiones(copia);
 						}
 					}
 				}

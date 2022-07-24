@@ -50,7 +50,7 @@ int Aridad(const operator_e op) {
 int OpArgs(const operator_e op) {
 	if (op == operator_e::AND || op == operator_e::OR || op == operator_e::NOT) {
 		return 1;
-	} else if (op == operator_e::ASIGNACION || op == operator_e::MENORIGUAL || op == operator_e::MENORQUE || op == operator_e::MAYORIGUAL || op == operator_e::MAYORQUE) {
+	} else if (op == operator_e::ASIGNACION) {
 		return 2;
 	} else {
 		return 3;
@@ -139,16 +139,16 @@ std::string GetInstruction(const operator_e op) {
 			return "div";
 			break;
 		case (operator_e::MENORIGUAL):
-			return "ble";
+			return "sle";
 			break;
 		case (operator_e::MENORQUE):
-			return "blt";
+			return "slt";
 			break;
 		case (operator_e::MAYORIGUAL):
-			return "bge";
+			return "sge";
 			break;
 		case (operator_e::MAYORQUE):
-			return "bgt";
+			return "sgt";
 			break;
 		default:
 			break;
