@@ -98,13 +98,13 @@ void CrearArchivo(const std::string& filename_out, const std::string& ruta,
  * @return false
  */
 bool MatchingBrackets(const std::string& sample) {
-	int parentesis = 0;
-	int corchetes = 0;
-	int llaves = 0;
+	int parentesis{};
+	int corchetes{};
+	int llaves{};
 	/// 1: parentesis++ ; 2: corchetes++ ; 3: llaves++ ;
 	/// -1: parentesis-- ; -2: corchetes-- ; -3: llaves-- ;
-	int last_increased = 0;
-	int pre_last_increased = 0;
+	int last_increased{};
+	int pre_last_increased{};
 	for (std::size_t i = 0; i < sample.length(); i++) {
 		pre_last_increased = last_increased;
 		/// conteo de cada tipo
